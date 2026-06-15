@@ -452,107 +452,114 @@ def show_budgeting(username):
             st.markdown("<p style='font-size:13px; color:gray; font-style:italic;'>You haven't tracked any expenses yet.</p>", unsafe_allow_html=True)
 
 def show_savings():
-    st.markdown("<p class='section-header'>🐷 Savings Growth Simulator & Milestone Planner</p>", unsafe_allow_html=True)
-    st.write("See how your money multiplies over time based on where you store it, clear out the confusion around inflation, and calculate your timeline for big goals.")
-    
-    # STEP 1: CONFIGURATION CONTROLS
-    st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:8px;'>⚙️ Step 1: Configure Your Growth Settings</p>", unsafe_allow_html=True)
-    
-    setup_col1, setup_col2, setup_col3 = st.columns([1, 1, 1])
-    with setup_col1:
-        principal = st.number_input("Starting Money Cushion (₹)", min_value=1000, value=10000, step=1000)
-    with setup_col2:
-        monthly_addition = st.number_input("Fresh Monthly Savings Added (₹)", min_value=0, value=1000, step=250)
-    with setup_col3:
-        tenure = st.slider("Your Time Horizon Limit (Years)", min_value=1, max_value=15, value=5)
+    st.markdown("<p class='section-header'>🐷 The Wealth Multiplier & Milestone Engine</p>", unsafe_allow_html=True)
+    st.write("Most people think saving is about sacrifice. At Finora, we look at it as buying your future freedom. See how small habits scale up, shield your cash from inflation, and map out your next big purchases.")
 
-    # Core Growth Math Definitions
-    sav_rate, fd_rate, stock_rate, inf_rate = 0.035, 0.071, 0.120, 0.060
-    months = tenure * 12
+    # ---------------------------------------------------------
+    # PART 1: THE DRIVER SEAT (SETTINGS INPUT)
+    # ---------------------------------------------------------
+    st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:8px;'>⚙️ Step 1: Set Your Baseline Numbers</p>", unsafe_allow_html=True)
     
-    sav_final = principal * ((1 + sav_rate/12) ** months) + sum([monthly_addition * ((1 + sav_rate/12) ** (months - i)) for i in range(1, months + 1)])
-    fd_final = principal * ((1 + fd_rate/12) ** months) + sum([monthly_addition * ((1 + fd_rate/12) ** (months - i)) for i in range(1, months + 1)])
-    stock_final = principal * ((1 + stock_rate/12) ** months) + sum([monthly_addition * ((1 + stock_rate/12) ** (months - i)) for i in range(1, months + 1)])
-    
-    total_cash_invested = principal + (monthly_addition * months)
-    purchasing_power = total_cash_invested / ((1 + inf_rate) ** tenure)
-    inflation_loss = total_cash_invested - purchasing_power
+    in_col1, in_col2, in_col3 = st.columns([1, 1, 1])
+    with in_col1:
+        starting_cash = st.number_input("Your Starting Cash Cushion (₹)", min_value=0, value=5000, step=1000, help="Money you already have set aside right now.")
+    with in_col2:
+        monthly_stash = st.number_input("Monthly Stash Contribution (₹)", min_value=0, value=1500, step=250, help="How much extra room you can squeeze out of your budget each month.")
+    with in_col3:
+        years_horizon = st.slider("Time Horizon Plan (Years)", min_value=1, max_value=10, value=3, help="How long you want to let this strategy run.")
 
-    # STEP 2: TRIPLE-TRACK COMPARISON CARDS
-    st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>📊 Step 2: Compare Your Future Balances</p>", unsafe_allow_html=True)
-    st.caption(f"Total out-of-pocket cash saved by you over {tenure} years: ₹{total_cash_invested:,.2f}")
+    # Core engine math pipelines (Calculated monthly)
+    months_total = years_horizon * 12
+    rate_savings, rate_fd, rate_index, rate_inflation = 0.035, 0.071, 0.120, 0.060
     
-    card_col1, card_col2, card_col3 = st.columns([1, 1, 1])
-    with card_col1:
+    # Growth formulas with monthly cash flows
+    final_savings = starting_cash * ((1 + rate_savings/12) ** months_total) + sum([monthly_stash * ((1 + rate_savings/12) ** (months_total - i)) for i in range(1, months_total + 1)])
+    final_fd = starting_cash * ((1 + rate_fd/12) ** months_total) + sum([monthly_stash * ((1 + rate_fd/12) ** (months_total - i)) for i in range(1, months_total + 1)])
+    final_index = starting_cash * ((1 + rate_index/12) ** months_total) + sum([monthly_stash * ((1 + rate_index/12) ** (months_total - i)) for i in range(1, months_total + 1)])
+    
+    out_of_pocket = starting_cash + (monthly_stash * months_total)
+    lost_buying_power = out_of_pocket - (out_of_pocket / ((1 + rate_inflation) ** years_horizon))
+
+    # ---------------------------------------------------------
+    # PART 2: THE TRIPLE-TRACK VERDICT CARDS
+    # ---------------------------------------------------------
+    st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>🔮 Step 2: Choose Your Money's Growth Path</p>", unsafe_allow_html=True)
+    st.caption(f"Actual cash physically saved out of your pocket over {years_horizon} years: ₹{out_of_pocket:,.2f}")
+    
+    card1, card2, card3 = st.columns([1, 1, 1])
+    
+    with card1:
         st.markdown(f"""
         <div class="metric-card" style="border-top: 4px solid #94a3b8; height: 100%;">
             <span style="font-size:11px; color:#64748b; font-weight:700; letter-spacing:0.5px;">🏥 TRADITIONAL BANK WALLET</span><br/>
-            <span style="font-size:24px; font-weight:800; color:#475569;">₹{sav_final:,.2f}</span><br/>
-            <span style="font-size:13px; color:#64748b;">Based on a <b>~3.5%</b> average bank account interest. Super safe, but grows very slowly.</span>
+            <span style="font-size:24px; font-weight:800; color:#475569;">₹{final_savings:,.2f}</span><br/>
+            <span style="font-size:13px; color:#64748b;">Grows at a crawl (~3.5%). Completely safe, but fails to beat the rising cost of living.</span>
         </div>
         """, unsafe_allow_html=True)
         
-    with card_col2:
+    with card2:
         st.markdown(f"""
         <div class="metric-card" style="border-top: 4px solid #0284c7; height: 100%;">
-            <span style="font-size:11px; color:#0284c7; font-weight:700; letter-spacing:0.5px;">🔒 FIXED DEPOSIT LOCKUP</span><br/>
-            <span style="font-size:24px; font-weight:800; color:#0284c7;">₹{fd_final:,.2f}</span><br/>
-            <span style="font-size:13px; color:#0369a1;">Based on a reliable <b>~7.1%</b> locked contract yield. Great for intermediate milestones.</span>
+            <span style="font-size:11px; color:#0284c7; font-weight:700; letter-spacing:0.5px;">🔒 GUARANTEED FIXED CONTRACT</span><br/>
+            <span style="font-size:24px; font-weight:800; color:#0284c7;">₹{final_fd:,.2f}</span><br/>
+            <span style="font-size:13px; color:#0369a1;">Locked in safely (~7.1%). Your balance is legally protected and keeps up with standard inflation drops.</span>
         </div>
         """, unsafe_allow_html=True)
         
-    with card_col3:
+    with card3:
         st.markdown(f"""
         <div class="metric-card" style="border-top: 4px solid #10b981; height: 100%; background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);">
-            <span style="font-size:11px; color:#10b981; font-weight:700; letter-spacing:0.5px;">🚀 DIVERSIFIED STOCK INDEX</span><br/>
-            <span style="font-size:24px; font-weight:800; color:#10b981;">₹{stock_final:,.2f}</span><br/>
-            <span style="font-size:13px; color:#15803d;">Based on historical long-term <b>~12%</b> equity pacing. Ideal strategy for long term horizons.</span>
+            <span style="font-size:11px; color:#10b981; font-weight:700; letter-spacing:0.5px;">🚀 DIVERSIFIED MARKET INDEX</span><br/>
+            <span style="font-size:24px; font-weight:800; color:#10b981;">₹{final_index:,.2f}</span><br/>
+            <span style="font-size:13px; color:#15803d;">Paced along India's top companies (~12% historic average). Best path to turn minor cash into real wealth.</span>
         </div>
         """, unsafe_allow_html=True)
 
-    # Inflation drag warning card
+    # Behavioral Psychology Trigger: The Loss Focus
     st.markdown(f"""
     <div style="background-color: #fef2f2; color: #b91c1c; padding: 12px 16px; border-radius: 10px; border: 1px solid #fee2e2; margin-top: 10px; font-size: 14px;">
-        ⚠️ <b>The Hidden Price of Sitting in Cash:</b> If you leave that same cash uninvested inside a drawer, 
-        a standard <b>~6% inflation rate</b> deletes <b>₹{inflation_loss:,.2f}</b> worth of real purchasing power over {tenure} years. 
-        Your future cash won't buy the same items it does today!
+        ⚠️ <b>The Hidden Cost of Doing Nothing:</b> Leaving your saved cash sitting uninvested inside a drawer or a basic smartphone wallet means a standard 6% inflation rate melts away <b>₹{lost_buying_power:,.2f}</b> of its raw purchasing power over your {years_horizon}-year timeline.
     </div>
     """, unsafe_allow_html=True)
 
-    # STEP 3: THE COFFEE DROP MICRO-SAVER ENGINE & CRYPTO TICKER PANEL
-    st.markdown("<div style='margin-top:25px;'></div>", unsafe_allow_html=True)
+    # ---------------------------------------------------------
+    # PART 3: THE HABIT COMPONENT & ASSETS
+    # ---------------------------------------------------------
+    st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
     
     layout_col, crypto_col = st.columns([2.1, 0.9])
     
     with layout_col:
-        st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>☕ Step 3: The Micro-Saving Habit Impact Engine</p>", unsafe_allow_html=True)
-        micro_col1, micro_col2, micro_col3 = st.columns([1, 1, 1])
-        with micro_col1:
-            future_coffee = sum([(50 * 30) * ((1 + stock_rate/12) ** (120 - i)) for i in range(1, 121)])
+        st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>☕ Step 3: Small Swaps, Big Future Wins</p>", unsafe_allow_html=True)
+        st.write("Instead of trying to find massive sums of money to invest, see what happens if you swap out just one everyday small expense pattern over a 5-year run:")
+        
+        habit1, habit2, habit3 = st.columns([1, 1, 1])
+        with habit1:
+            stash_tea = sum([(40 * 30) * ((1 + rate_index/12) ** (60 - i)) for i in range(1, 61)])
             st.markdown(f"""
-            <div class="metric-card" style="background-color: #fffbeb; border: 1px solid #fef3c7; padding:15px; height:100%;">
-                <span style="font-size:12px; font-weight:bold; color:#b45309;">Skip Daily Premium Tea (Save ₹50/day)</span><br/>
-                <span style="font-size:18px; font-weight:800; color:#78350f;">₹{future_coffee:,.2f}</span><br/>
-                <span style="font-size:12.5px; color:#92400e;">Saved in an Index Fund over 10 years.</span>
+            <div class="metric-card" style="background-color: #fffbeb; border: 1px solid #fef3c7; height:100%; padding:15px;">
+                <span style="font-size:11.5px; font-weight:700; color:#b45309; text-transform: uppercase;">☕ The Daily Chai Swap</span><br/>
+                <span style="font-size:20px; font-weight:800; color:#78350f;">₹{stash_tea:,.2f}</span><br/>
+                <span style="font-size:12.5px; color:#92400e;">Saved by putting away <b>₹40 a day</b> into an index option instead of premium street drinks.</span>
             </div>
             """, unsafe_allow_html=True)
-        with micro_col2:
-            future_food = sum([(150 * 30) * ((1 + stock_rate/12) ** (120 - i)) for i in range(1, 121)])
+        with habit2:
+            stash_food = sum([(160 * 30) * ((1 + rate_index/12) ** (60 - i)) for i in range(1, 61)])
             st.markdown(f"""
-            <div class="metric-card" style="background-color: #f0fdfa; border: 1px solid #ccfbf1; padding:15px; height:100%;">
-                <span style="font-size:12px; font-weight:bold; color:#0f766e;">Skip One Fast-Food App Order (Save ₹150/day)</span><br/>
-                <span style="font-size:18px; font-weight:800; color:#115e59;">₹{future_food:,.2f}</span><br/>
-                <span style="font-size:12.5px; color:#134e4a;">Saved in an Index Fund over 10 years.</span>
+            <div class="metric-card" style="background-color: #f0fdfa; border: 1px solid #ccfbf1; height:100%; padding:15px;">
+                <span style="font-size:11.5px; font-weight:700; color:#0f766e; text-transform: uppercase;">🍔 The Delivery App Skip</span><br/>
+                <span style="font-size:20px; font-weight:800; color:#115e59;">₹{stash_food:,.2f}</span><br/>
+                <span style="font-size:12.5px; color:#134e4a;">Saved by cooking at home just once more per week and stashing <b>₹160 a day</b>.</span>
             </div>
             """, unsafe_allow_html=True)
-        with micro_col3:
-            future_luxury = sum([(300 * 30) * ((1 + stock_rate/12) ** (120 - i)) for i in range(1, 121)])
+        with habit3:
+            stash_sub = sum([(350 * 30) * ((1 + rate_index/12) ** (60 - i)) for i in range(1, 61)])
             st.markdown(f"""
-            <div class="metric-card" style="background-color: #f5f3ff; border: 1px solid #edd5ff; padding:15px; height:100%;">
-                <span style="font-size:12px; font-weight:bold; color:#6d28d9;">Stop Weekend Impulse Clothes Shopping (Save ₹300/day)</span><br/>
-                <span style="font-size:18px; font-weight:800; color:#5b21b6;">₹{future_luxury:,.2f}</span><br/>
-                <span style="font-size:12.5px; color:#4c1d95;">Saved in an Index Fund over 10 years.</span>
+            <div class="metric-card" style="background-color: #f5f3ff; border: 1px solid #edd5ff; height:100%; padding:15px;">
+                <span style="font-size:11.5px; font-weight:700; color:#6d28d9; text-transform: uppercase;">👟 The Impulse Guard</span><br/>
+                <span style="font-size:20px; font-weight:800; color:#5b21b6;">₹{stash_sub:,.2f}</span><br/>
+                <span style="font-size:12.5px; color:#4c1d95;">Saved by pausing 24 hours before buying clothes or tech accessories (Saves <b>₹350 a day</b>).</span>
             </div>
             """, unsafe_allow_html=True)
             
@@ -575,38 +582,40 @@ def show_savings():
         else:
             st.caption("Live asset feed unavailable at this hour.")
 
-    # STEP 4: TARGET MILESTONE PLANNER
-    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>🎯 Step 4: Your Target Milestone Tracker</p>", unsafe_allow_html=True)
+    # ---------------------------------------------------------
+    # PART 4: THE REVERSE GOAL HORIZON ARCHITECT
+    # ---------------------------------------------------------
+    st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>🎯 Step 4: Map Out a Custom Financial Goal Target</p>", unsafe_allow_html=True)
     
-    plan_col1, plan_col2 = st.columns([1.2, 1.8])
-    with plan_col1:
-        with st.form("milestone_planner_form"):
-            st.markdown("<p style='font-size:14px; font-weight:700; margin:0 0 8px 0; color:#475569;'>Set a Goal Metric</p>", unsafe_allow_html=True)
-            goal_name = st.text_input("What are you saving up for?", value="Tech Upgrades (Laptop/Phone)")
-            goal_cost = st.number_input("Target Cost Price (₹)", min_value=5000, value=60000, step=5000)
-            monthly_allocation = st.number_input("Your Safe Monthly Deposit Capability (₹)", min_value=500, value=3000, step=500)
-            st.form_submit_button("Calculate My Timeline Plan")
+    plan_left, plan_right = st.columns([1.2, 1.8])
+    with plan_left:
+        with st.form("dynamic_goal_engine"):
+            st.markdown("<p style='font-size:14px; font-weight:700; margin:0 0 6px 0; color:#475569;'>Configure Milestone Blueprint</p>", unsafe_allow_html=True)
+            milestone_label = st.text_input("What are you building this fund for?", value="Next-Gen Developer Laptop")
+            milestone_target = st.number_input("Target Amount Needed (₹)", min_value=2000, value=75000, step=5000)
+            monthly_capacity = st.number_input("Your Comfortable Monthly Stash Power (₹)", min_value=250, value=3500, step=250)
+            st.form_submit_button("Calculate My Exact Timeline")
             
-    with plan_col2:
-        if monthly_allocation > 0:
-            months_required = int(goal_cost / monthly_allocation) if goal_cost > monthly_allocation else 1
-            years_calc = months_required // 12
-            rem_months = months_required % 12
+    with plan_right:
+        if monthly_capacity > 0:
+            total_months_needed = int(milestone_target / monthly_capacity) if milestone_target > monthly_capacity else 1
+            years_part = total_months_needed // 12
+            months_part = total_months_needed % 12
             
-            time_string = f"{years_calc} Year{'s' if years_calc > 1 else ''} " if years_calc > 0 else ""
-            if rem_months > 0 or years_calc == 0:
-                time_string += f"{rem_months} Month{'s' if rem_months != 1 else ''}"
+            duration_readout = f"{years_part} Year{'s' if years_part > 1 else ''} " if years_part > 0 else ""
+            if months_part > 0 or years_part == 0:
+                duration_readout += f"{months_part} Month{'s' if months_part != 1 else ''}"
                 
             st.markdown(f"""
-            <div class="metric-card" style="background-color: #fafafa; border-left: 5px solid #0284c7; margin-top:10px; padding: 24px;">
-                <span style="font-size:12px; color:#64748b; font-weight:700; letter-spacing:0.5px;">🎯 BLUEPRINT HORIZON: {goal_name.upper()}</span><br/>
-                <span style="font-size:28px; font-weight:900; color:#0f172a; line-height:1.2;">{time_string}</span><br/>
-                <p style="font-size:14.5px; color:#475569; margin-top:8px; line-height:1.5;">
-                    By putting away exactly <b>₹{monthly_allocation:,.2f} each month</b>, you will fully cover the <b>₹{goal_cost:,.2f}</b> requirement price point in roughly <b>{months_required} months</b>.
+            <div class="metric-card" style="background-color: #fafafa; border-left: 5px solid #0284c7; padding: 24px; height: 100%;">
+                <span style="font-size:12px; color:#64748b; font-weight:700; letter-spacing:0.5px;">🏁 TARGET HORIZON OUTCOME: {milestone_label.upper()}</span><br/>
+                <span style="font-size:32px; font-weight:900; color:#0f172a; line-height:1.2;">{duration_readout}</span><br/>
+                <p style="font-size:14.5px; color:#475569; margin-top:10px; line-height:1.5;">
+                    By maintaining an automated rhythm of <b>₹{monthly_capacity:,.2f} each month</b>, your cash reserve will fully bridge the <b>₹{milestone_target:,.2f}</b> goal post in exactly <b>{total_months_needed} months</b>.
                 </p>
-                <div style="font-size:12.5px; color:#0284c7; font-weight:700; background-color:#f0f9ff; padding:8px 12px; border-radius:6px; display:inline-block; margin-top:2px;">
-                    💡 Pro Tip: Setting up an automated bank sweep on the 1st of every month keeps your milestone tracking running without human error.
+                <div style="font-size:12.5px; color:#0284c7; font-weight:700; background-color:#f0f9ff; padding:8px 12px; border-radius:6px; display:inline-block; margin-top:4px;">
+                    💡 Finora Automation Hack: Set a bank instruction to move this ₹{monthly_capacity:,.2f} out of your main account on the 1st day of the month before you get a chance to spend it.
                 </div>
             </div>
             """, unsafe_allow_html=True)
