@@ -4,6 +4,7 @@ from postgrest.exceptions import APIError
 import hashlib
 import pandas as pd
 import plotly.express as px
+import requests
 
 # --- SUPABASE CONFIGURATION ---
 raw_url = st.secrets["SUPABASE_URL"]
@@ -15,6 +16,44 @@ def init_supabase() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 supabase = init_supabase()
+
+# --- FREE PUBLIC API INTEGRATIONS ---
+@st.cache_data(ttl=3600)
+def get_live_exchange_rates():
+    """Fetches conversion rates for students looking to study abroad"""
+    try:
+        url = "https://api.frankfurter.app/latest?from=INR&to=USD,EUR,GBP"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            return response.json().get("rates", {})
+        return None
+    except Exception:
+        return None
+
+@st.cache_data(ttl=600)
+def get_crypto_prices():
+    """Fetches real-world digital token metrics in INR"""
+    try:
+        url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=inr"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except Exception:
+        return None
+
+@st.cache_data(ttl=86400)
+def get_daily_motivation():
+    """Fetches a free daily wealth-mindset or motivational quote"""
+    try:
+        url = "https://zenquotes.io/api/today"
+        response = requests.get(url, timeout=3)
+        if response.status_code == 200:
+            data = response.json()
+            return f'"{data[0]["q"]}" — {data[0]["a"]}'
+        return "Small daily savings compound into massive future freedom! ✨"
+    except Exception:
+        return "Small daily savings compound into massive future freedom! ✨"
 
 # --- THE FINORA PREMIUM CLEAN UI THEME ---
 st.set_page_config(page_title="Finora | Simple Student Wealth Hub", page_icon="💳", layout="wide")
@@ -195,7 +234,7 @@ def show_finance_desk(profile, username):
         </div>
         """, unsafe_allow_html=True)
         
-        # FEATURE ADDITION: Dynamic Financial Health Alert Box
+        # FINANCIAL HEALTH STATUS ALERT BOX
         rem_pct = max(((budget_max - total_spent) / budget_max) * 100, 0.0)
         health_color = "#10b981" if rem_pct > 40 else "#f59e0b" if rem_pct > 15 else "#ef4444"
         health_label = "Great Job! Your spending looks super healthy." if rem_pct > 40 else "Careful. You are spending money a bit too fast this month." if rem_pct > 15 else "Danger! You have almost run out of spending money."
@@ -208,7 +247,19 @@ def show_finance_desk(profile, username):
         </div>
         """, unsafe_allow_html=True)
 
-        # FEATURE ADDITION: Daily Spending Guidelines
+        # STUDY ABROAD LIVE CURRENCY WIDGET
+        rates = get_live_exchange_rates()
+        if rates:
+            usd_val = rates.get("USD", 0.012)
+            gbp_val = rates.get("GBP", 0.009)
+            st.markdown(f"""
+            <div class="metric-card" style="background-color: #f0f9ff; border: 1px solid #bae6fd;">
+                <span style="font-size:12px; color:#0369a1; font-weight:700; letter-spacing:0.5px;">🌐 STUDY ABROAD WALLET CONVERTER</span><br/>
+                <span style="font-size:14px; color:#1e293b;">Your <b>₹25,000</b> monthly budget equals roughly <b>${25000 * usd_val:,.2f} USD</b> or <b>£{25000 * gbp_val:,.2f} GBP</b>.</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # DAILY BUDGET GUIDELINE
         daily_allowance = max((budget_max - total_spent) / 30, 0.0)
         st.markdown(f"""
         <div class="metric-card" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
@@ -362,7 +413,7 @@ def show_budgeting(username):
                 supabase.table("expenses").insert({"username": username, "category": cat, "amount": amt}).execute()
                 st.rerun()
                 
-        # FEATURE ADDITION: Simple Emergency Safety Cushion Advisor
+        # EMERGENCY SAFETY CUSHION ADVISOR
         st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
         res_p = supabase.table("profiles").select("occupation").eq("username", username).execute()
         track = res_p.data[0]['occupation'] if res_p.data else "Student"
@@ -387,10 +438,10 @@ def show_budgeting(username):
         """, unsafe_allow_html=True)
         st.progress(min(total/25000, 1.0))
         
-        # FEATURE ADDITION: Clear Itemized History Ledger List View
+        # CLEAR ITEMIZED RECENT HISTORY LEDGER
         st.markdown("<p style='font-size:14px; font-weight:700; color:#475569; margin-bottom:6px; margin-top:14px;'>📜 Your Recent History Ledger</p>", unsafe_allow_html=True)
         if res.data:
-            for item in res.data[-4:]: # Display last 4 records for maximum layout neatness
+            for item in res.data[-4:]:
                 st.markdown(f"""
                 <div class="ledger-row">
                     <span style="font-weight:600; color:#1e293b;">{item['category']}</span>
@@ -401,45 +452,164 @@ def show_budgeting(username):
             st.markdown("<p style='font-size:13px; color:gray; font-style:italic;'>You haven't tracked any expenses yet.</p>", unsafe_allow_html=True)
 
 def show_savings():
-    st.markdown("<p class='section-header'>🐷 Savings Growth & Inflation Risk Calculators</p>", unsafe_allow_html=True)
-    st.write("See how your savings grow over time depending on where you put them, alongside how much buying power cash loses if it sits around doing nothing.")
+    st.markdown("<p class='section-header'>🐷 Savings Growth Simulator & Milestone Planner</p>", unsafe_allow_html=True)
+    st.write("See how your money multiplies over time based on where you store it, clear out the confusion around inflation, and calculate your timeline for big goals.")
     
-    col1, col2 = st.columns([1.2, 1.8])
-    with col1:
-        principal = st.number_input("Starting Money Amount (₹)", min_value=1000, value=10000, step=1000)
-        tenure = st.slider("How many years will you leave it?", 1, 10, 3)
-    with col2:
-        sav_rate, fd_rate, inf_rate, simple_invest_rate = 0.035, 0.071, 0.060, 0.120
-        sav_final = principal * ((1 + sav_rate) ** tenure)
-        fd_final = principal * ((1 + fd_rate) ** tenure)
-        invest_final = principal * ((1 + simple_invest_rate) ** tenure)
-        
-        purchasing_power = principal / ((1 + inf_rate) ** tenure)
-        loss_value = principal - purchasing_power
-        
+    # STEP 1: CONFIGURATION CONTROLS
+    st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:8px;'>⚙️ Step 1: Configure Your Growth Settings</p>", unsafe_allow_html=True)
+    
+    setup_col1, setup_col2, setup_col3 = st.columns([1, 1, 1])
+    with setup_col1:
+        principal = st.number_input("Starting Money Cushion (₹)", min_value=1000, value=10000, step=1000)
+    with setup_col2:
+        monthly_addition = st.number_input("Fresh Monthly Savings Added (₹)", min_value=0, value=1000, step=250)
+    with setup_col3:
+        tenure = st.slider("Your Time Horizon Limit (Years)", min_value=1, max_value=15, value=5)
+
+    # Core Growth Math Definitions
+    sav_rate, fd_rate, stock_rate, inf_rate = 0.035, 0.071, 0.120, 0.060
+    months = tenure * 12
+    
+    sav_final = principal * ((1 + sav_rate/12) ** months) + sum([monthly_addition * ((1 + sav_rate/12) ** (months - i)) for i in range(1, months + 1)])
+    fd_final = principal * ((1 + fd_rate/12) ** months) + sum([monthly_addition * ((1 + fd_rate/12) ** (months - i)) for i in range(1, months + 1)])
+    stock_final = principal * ((1 + stock_rate/12) ** months) + sum([monthly_addition * ((1 + stock_rate/12) ** (months - i)) for i in range(1, months + 1)])
+    
+    total_cash_invested = principal + (monthly_addition * months)
+    purchasing_power = total_cash_invested / ((1 + inf_rate) ** tenure)
+    inflation_loss = total_cash_invested - purchasing_power
+
+    # STEP 2: TRIPLE-TRACK COMPARISON CARDS
+    st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>📊 Step 2: Compare Your Future Balances</p>", unsafe_allow_html=True)
+    st.caption(f"Total out-of-pocket cash saved by you over {tenure} years: ₹{total_cash_invested:,.2f}")
+    
+    card_col1, card_col2, card_col3 = st.columns([1, 1, 1])
+    with card_col1:
         st.markdown(f"""
-        <div class="metric-card">
-            <span style="font-size:12px; color:#64748b; font-weight:700; letter-spacing:0.5px;">FUTURE BALANCES COMPARED</span>
-            <hr style="margin:8px 0; border-color:#e2e8f0;"/>
-            <div style="display:flex; justify-content:between; font-size:14.5px; margin:5px 0;">
-                <span style="color:#475569; font-weight:500;">Left in Regular Savings Bank Account (~3.5% growth):</span>
-                <span style="margin-left:auto; font-weight:700; color:#0f172a;">₹{sav_final:,.2f}</span>
-            </div>
-            <div style="display:flex; justify-content:between; font-size:14.5px; margin:5px 0; color:#0284c7;">
-                <span style="font-weight: 600;">Locked in a Fixed Deposit Bank Plan (~7.1% growth):</span>
-                <span style="margin-left:auto; font-weight:800;">₹{fd_final:,.2f}</span>
-            </div>
-            <div style="display:flex; justify-content:between; font-size:14.5px; margin:6px 0; color:#10b981;">
-                <span style="font-weight: 600;">🚀 Put into a Simple Stock Index Fund (~12% average growth):</span>
-                <span style="margin-left:auto; font-weight:800;">₹{invest_final:,.2f}</span>
-            </div>
-            <hr style="margin:8px 0; border-color:#e2e8f0;"/>
-            <div style="display:flex; justify-content:between; font-size:14.5px; margin:5px 0; color:#ef4444; background:#fef2f2; padding:8px 12px; border-radius:8px;">
-                <span style="font-weight:500;">⚠️ Left Under the Mattress (Loss to ~6% Yearly Inflation Cost):</span>
-                <span style="margin-left:auto; font-weight:700;">-₹{loss_value:,.2f} Drop in Real Buying Power</span>
-            </div>
+        <div class="metric-card" style="border-top: 4px solid #94a3b8; height: 100%;">
+            <span style="font-size:11px; color:#64748b; font-weight:700; letter-spacing:0.5px;">🏥 TRADITIONAL BANK WALLET</span><br/>
+            <span style="font-size:24px; font-weight:800; color:#475569;">₹{sav_final:,.2f}</span><br/>
+            <span style="font-size:13px; color:#64748b;">Based on a <b>~3.5%</b> average bank account interest. Super safe, but grows very slowly.</span>
         </div>
         """, unsafe_allow_html=True)
+        
+    with card_col2:
+        st.markdown(f"""
+        <div class="metric-card" style="border-top: 4px solid #0284c7; height: 100%;">
+            <span style="font-size:11px; color:#0284c7; font-weight:700; letter-spacing:0.5px;">🔒 FIXED DEPOSIT LOCKUP</span><br/>
+            <span style="font-size:24px; font-weight:800; color:#0284c7;">₹{fd_final:,.2f}</span><br/>
+            <span style="font-size:13px; color:#0369a1;">Based on a reliable <b>~7.1%</b> locked contract yield. Great for intermediate milestones.</span>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with card_col3:
+        st.markdown(f"""
+        <div class="metric-card" style="border-top: 4px solid #10b981; height: 100%; background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);">
+            <span style="font-size:11px; color:#10b981; font-weight:700; letter-spacing:0.5px;">🚀 DIVERSIFIED STOCK INDEX</span><br/>
+            <span style="font-size:24px; font-weight:800; color:#10b981;">₹{stock_final:,.2f}</span><br/>
+            <span style="font-size:13px; color:#15803d;">Based on historical long-term <b>~12%</b> equity pacing. Ideal strategy for long term horizons.</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Inflation drag warning card
+    st.markdown(f"""
+    <div style="background-color: #fef2f2; color: #b91c1c; padding: 12px 16px; border-radius: 10px; border: 1px solid #fee2e2; margin-top: 10px; font-size: 14px;">
+        ⚠️ <b>The Hidden Price of Sitting in Cash:</b> If you leave that same cash uninvested inside a drawer, 
+        a standard <b>~6% inflation rate</b> deletes <b>₹{inflation_loss:,.2f}</b> worth of real purchasing power over {tenure} years. 
+        Your future cash won't buy the same items it does today!
+    </div>
+    """, unsafe_allow_html=True)
+
+    # STEP 3: THE COFFEE DROP MICRO-SAVER ENGINE & CRYPTO TICKER PANEL
+    st.markdown("<div style='margin-top:25px;'></div>", unsafe_allow_html=True)
+    
+    layout_col, crypto_col = st.columns([2.1, 0.9])
+    
+    with layout_col:
+        st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>☕ Step 3: The Micro-Saving Habit Impact Engine</p>", unsafe_allow_html=True)
+        micro_col1, micro_col2, micro_col3 = st.columns([1, 1, 1])
+        with micro_col1:
+            future_coffee = sum([(50 * 30) * ((1 + stock_rate/12) ** (120 - i)) for i in range(1, 121)])
+            st.markdown(f"""
+            <div class="metric-card" style="background-color: #fffbeb; border: 1px solid #fef3c7; padding:15px; height:100%;">
+                <span style="font-size:12px; font-weight:bold; color:#b45309;">Skip Daily Premium Tea (Save ₹50/day)</span><br/>
+                <span style="font-size:18px; font-weight:800; color:#78350f;">₹{future_coffee:,.2f}</span><br/>
+                <span style="font-size:12.5px; color:#92400e;">Saved in an Index Fund over 10 years.</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with micro_col2:
+            future_food = sum([(150 * 30) * ((1 + stock_rate/12) ** (120 - i)) for i in range(1, 121)])
+            st.markdown(f"""
+            <div class="metric-card" style="background-color: #f0fdfa; border: 1px solid #ccfbf1; padding:15px; height:100%;">
+                <span style="font-size:12px; font-weight:bold; color:#0f766e;">Skip One Fast-Food App Order (Save ₹150/day)</span><br/>
+                <span style="font-size:18px; font-weight:800; color:#115e59;">₹{future_food:,.2f}</span><br/>
+                <span style="font-size:12.5px; color:#134e4a;">Saved in an Index Fund over 10 years.</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with micro_col3:
+            future_luxury = sum([(300 * 30) * ((1 + stock_rate/12) ** (120 - i)) for i in range(1, 121)])
+            st.markdown(f"""
+            <div class="metric-card" style="background-color: #f5f3ff; border: 1px solid #edd5ff; padding:15px; height:100%;">
+                <span style="font-size:12px; font-weight:bold; color:#6d28d9;">Stop Weekend Impulse Clothes Shopping (Save ₹300/day)</span><br/>
+                <span style="font-size:18px; font-weight:800; color:#5b21b6;">₹{future_luxury:,.2f}</span><br/>
+                <span style="font-size:12.5px; color:#4c1d95;">Saved in an Index Fund over 10 years.</span>
+            </div>
+            """, unsafe_allow_html=True)
+            
+    with crypto_col:
+        st.markdown("<p style='font-size:16px; font-weight:700; color:#1e293b; margin-bottom:4px;'>⚡ Live Global Crypto Rates</p>", unsafe_allow_html=True)
+        crypto = get_crypto_prices()
+        if crypto:
+            btc_inr = crypto.get("bitcoin", {}).get("inr", 0)
+            eth_inr = crypto.get("ethereum", {}).get("inr", 0)
+            st.markdown(f"""
+            <div class="metric-card" style="border-top: 3px solid #f59e0b; padding: 12px; margin-bottom:8px;">
+                <span style="font-size:11px; color:gray; font-weight:bold;">BITCOIN (BTC)</span><br/>
+                <span style="font-size:15px; font-weight:700; color:#0f172a;">₹{btc_inr:,.2f}</span>
+            </div>
+            <div class="metric-card" style="border-top: 3px solid #6366f1; padding: 12px; margin-bottom:8px;">
+                <span style="font-size:11px; color:gray; font-weight:bold;">ETHEREUM (ETH)</span><br/>
+                <span style="font-size:15px; font-weight:700; color:#0f172a;">₹{eth_inr:,.2f}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.caption("Live asset feed unavailable at this hour.")
+
+    # STEP 4: TARGET MILESTONE PLANNER
+    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>🎯 Step 4: Your Target Milestone Tracker</p>", unsafe_allow_html=True)
+    
+    plan_col1, plan_col2 = st.columns([1.2, 1.8])
+    with plan_col1:
+        with st.form("milestone_planner_form"):
+            st.markdown("<p style='font-size:14px; font-weight:700; margin:0 0 8px 0; color:#475569;'>Set a Goal Metric</p>", unsafe_allow_html=True)
+            goal_name = st.text_input("What are you saving up for?", value="Tech Upgrades (Laptop/Phone)")
+            goal_cost = st.number_input("Target Cost Price (₹)", min_value=5000, value=60000, step=5000)
+            monthly_allocation = st.number_input("Your Safe Monthly Deposit Capability (₹)", min_value=500, value=3000, step=500)
+            st.form_submit_button("Calculate My Timeline Plan")
+            
+    with plan_col2:
+        if monthly_allocation > 0:
+            months_required = int(goal_cost / monthly_allocation) if goal_cost > monthly_allocation else 1
+            years_calc = months_required // 12
+            rem_months = months_required % 12
+            
+            time_string = f"{years_calc} Year{'s' if years_calc > 1 else ''} " if years_calc > 0 else ""
+            if rem_months > 0 or years_calc == 0:
+                time_string += f"{rem_months} Month{'s' if rem_months != 1 else ''}"
+                
+            st.markdown(f"""
+            <div class="metric-card" style="background-color: #fafafa; border-left: 5px solid #0284c7; margin-top:10px; padding: 24px;">
+                <span style="font-size:12px; color:#64748b; font-weight:700; letter-spacing:0.5px;">🎯 BLUEPRINT HORIZON: {goal_name.upper()}</span><br/>
+                <span style="font-size:28px; font-weight:900; color:#0f172a; line-height:1.2;">{time_string}</span><br/>
+                <p style="font-size:14.5px; color:#475569; margin-top:8px; line-height:1.5;">
+                    By putting away exactly <b>₹{monthly_allocation:,.2f} each month</b>, you will fully cover the <b>₹{goal_cost:,.2f}</b> requirement price point in roughly <b>{months_required} months</b>.
+                </p>
+                <div style="font-size:12.5px; color:#0284c7; font-weight:700; background-color:#f0f9ff; padding:8px 12px; border-radius:6px; display:inline-block; margin-top:2px;">
+                    💡 Pro Tip: Setting up an automated bank sweep on the 1st of every month keeps your milestone tracking running without human error.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
 def show_splitting():
     st.markdown("<p class='section-header'>👥 Easy Friend Bill Splitter & Shareable UPI Links</p>", unsafe_allow_html=True)
@@ -463,6 +633,19 @@ def show_splitting():
             st.markdown("<span style='font-size:13px; color:#475569; font-weight:700;'>⚡ UPI LINK TO PASTE INTO YOUR FRIEND CHAT:</span>", unsafe_allow_html=True)
             upi_link = f"upi://pay?pa={vpa}&pn=FinoraSplit&am={per_person}&cu=INR"
             st.code(upi_link, language="markdown")
+            
+            # AUTOMATED WHATSAPP SPLIT LINK GENERATOR
+            message_text = f"Hey! Here is the split for our bill. Your share comes out to exactly ₹{per_person:,.2f}. You can pay directly via UPI here: {upi_link}"
+            encoded_message = message_text.replace(" ", "%20")
+            whatsapp_url = f"https://wa.me/?text={encoded_message}"
+            
+            st.markdown(f"""
+            <a href="{whatsapp_url}" target="_blank" style="text-decoration: none;">
+                <div style="background-color: #25d366; color: white; text-align: center; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 14px; margin-top: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-transform: uppercase; letter-spacing:0.5px;">
+                    📱 Ping Friends on WhatsApp
+                </div>
+            </a>
+            """, unsafe_allow_html=True)
 
 # --- CORE APPLICATION MASTER SKELETON ---
 if st.session_state.username is None:
@@ -473,6 +656,14 @@ else:
     with st.sidebar:
         st.markdown("<p class='main-header' style='font-size: 28px !important; margin-bottom:0px;'>✨ Finora</p>", unsafe_allow_html=True)
         st.caption(f"Logged in as: {st.session_state.username.upper()}")
+        
+        # SIDEBAR MOTIVATION VALUE BLOCK
+        quote = get_daily_motivation()
+        st.markdown(f"""
+        <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin: 10px 0;">
+            <p style="font-size: 12px !important; font-style: italic; color: #475569; margin:0; line-height:1.4;">{quote}</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         user_points = profile['points'] if profile else 0
         st.markdown(f"🏆 Academy Balance: **{user_points} Finora XP**")
