@@ -34,14 +34,27 @@ st.markdown("""
         border-radius: 8px;
         padding: 25px;
         border: 1px solid #e2e8f0;
-        margin-bottom: 15px;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.02);
     }
     .stMetric {
         background-color: #ffffff;
         padding: 15px;
         border-radius: 10px;
         border: 1px solid #eee;
+    }
+    /* Style sidebar buttons to look like custom nav links */
+    div.stButton > button:first-child {
+        text-align: left !important;
+        justify-content: flex-start !important;
+        width: 100%;
+        border: 1px solid #e2e8f0;
+        background-color: #ffffff;
+        padding: 10px 15px;
+    }
+    div.stButton > button:first-child:hover {
+        border-color: #4A90E2;
+        color: #4A90E2;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -58,8 +71,11 @@ def fetch_user_profile(username):
         st.error(f"Database Error: {e.message}")
         return None
 
+# --- STATE MANAGEMENT ---
 if "username" not in st.session_state:
     st.session_state.username = None
+if "nav_selection" not in st.session_state:
+    st.session_state.nav_selection = "📊 Personal Finance Desk"
 
 # --- AUTHENTICATION ---
 def login_page():
@@ -102,85 +118,112 @@ def show_finance_desk(profile, username):
     st.markdown("## 📊 Personal Finance Desk")
     st.caption("Real-time summary of your account standing and XP growth.")
     
-    # KPI metrics
+    standing = profile['occupation'] if profile else "Student"
+    points = profile['points'] if profile else 0
+    level = "Beginner" if points < 150 else "Intermediate" if points < 300 else "Financial Master"
+
     m1, m2, m3 = st.columns(3)
-    with m1: st.metric("Current Standing", profile['occupation'])
-    with m2: st.metric("Platform XP", f"🏅 {profile['points']}")
-    with m3: st.metric("Level", "Beginner" if profile['points'] < 100 else "Intermediate")
+    with m1: st.metric("Current Standing", standing)
+    with m2: st.metric("Platform XP", f"🏅 {points}")
+    with m3: st.metric("Academic Rank", level)
 
     st.markdown("---")
     res = supabase.table("expenses").select("*").eq("username", username).execute()
     if res.data:
         df = pd.DataFrame(res.data)
         df['amount'] = df['amount'].astype(float)
-        fig = px.pie(df, values='amount', names='category', hole=0.5, title="Expense Allocation")
+        fig = px.pie(df, values='amount', names='category', hole=0.5, title="Expense Allocation Breakdown")
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("No data yet. Log expenses in the 'Budgeting Tracker'.")
+        st.info("No data tracking entries discovered. Log expenses inside the 'Budgeting Tracker' module.")
 
 def show_micro_courses(profile, username):
     st.markdown("## 📚 Financial Intelligence Academy")
-    st.caption("Complete interactive modules to master your money and earn +25 XP per quiz.")
+    st.caption("Review the complete 8-course foundational blueprint text below. Complete the Master Quiz at the bottom to lock in +100 XP.")
     
-    course_list = {
-        "1. Velocity of Compounding": "Learn how time turns small savings into massive assets.",
-        "2. The 50/30/20 Rule": "Master the ultimate budgeting framework for students.",
-        "3. Credit Score Secrets": "How to build institutional trust before you graduate.",
-        "4. Index Funds & ETFs": "Investing in the whole market vs picking stocks.",
-        "5. The Emergency Fund": "Building a 3-6 month cash safety net.",
-        "6. Taxes for Side-Hustles": "Navigating 1099 and self-employment taxes."
-    }
-    
-    selected_course = st.selectbox("Select a Learning Module", list(course_list.keys()))
-    st.markdown(f"<div class='stLessonCard'>", unsafe_allow_html=True)
-    
-    if "1." in selected_course:
-        st.markdown("### 📈 Compounding Logic")
-        st.write("Interest on interest. It converts linear growth into parabolic wealth.")
-        st.latex(r"A = P(1 + r/n)^{nt}")
-        ans = st.radio("Year 1: $100 + 10% = $110. What is the value after Year 2?", ["$120", "$121", "$111"])
-        if st.button("Submit Quiz"): 
-            if ans == "$121": st.success("Correct! +25 XP"); supabase.table("profiles").update({"points": profile['points']+25}).eq("username", username).execute()
-            else: st.error("Incorrect. Remember the 10% applies to the $110, not the $100.")
+    current_points = profile['points'] if profile else 0
 
-    elif "2." in selected_course:
-        st.markdown("### 🎛️ 50/30/20 Framework")
-        st.write("50% Needs, 30% Wants, 20% Savings/Debt.")
-        ans = st.radio("A new Netflix subscription falls under which category?", ["Needs", "Wants", "Savings"])
-        if st.button("Submit Quiz"): 
-            if ans == "Wants": st.success("Correct! +25 XP"); supabase.table("profiles").update({"points": profile['points']+25}).eq("username", username).execute()
-
-    elif "3." in selected_course:
-        st.markdown("### 💳 Credit Mastery")
-        st.write("Credit utilization (how much of your limit you use) should stay under 30%.")
-        ans = st.radio("What is the biggest factor in your credit score?", ["Payment History", "Total Income", "Number of Cards"])
-        if st.button("Submit Quiz"): 
-            if ans == "Payment History": st.success("Correct! +25 XP"); supabase.table("profiles").update({"points": profile['points']+25}).eq("username", username).execute()
-
-    elif "4." in selected_course:
-        st.markdown("### 🏛️ Index Funds & ETFs")
-        st.write("Instead of buying one stock like Apple, you buy a 'basket' of the 500 biggest companies (S&P 500). This lowers risk.")
-        st.info("💡 **Key Fact:** Over 90% of professional stock pickers fail to beat a simple S&P 500 Index Fund over 10 years.")
-        ans = st.radio("What is a major benefit of an Index ETF?", ["Instant Diversification", "Guaranteed 100% returns", "No risk of losing money"])
-        if st.button("Submit Quiz"):
-            if ans == "Instant Diversification": st.success("Correct! +25 XP"); supabase.table("profiles").update({"points": profile['points']+25}).eq("username", username).execute()
-
-    elif "5." in selected_course:
-        st.markdown("### 🛡️ The Emergency Fund")
-        st.write("Before investing, you need cash to cover 'Broken Phone' or 'Car Repair' moments. The goal is 3-6 months of basic living expenses.")
-        ans = st.radio("Where should an Emergency Fund be kept?", ["Crypto Wallet", "High-Yield Savings Account", "In a safe at home"])
-        if st.button("Submit Quiz"):
-            if ans == "High-Yield Savings Account": st.success("Correct! +25 XP"); supabase.table("profiles").update({"points": profile['points']+25}).eq("username", username).execute()
-
-    elif "6." in selected_course:
-        st.markdown("### 🧾 Taxes for Side-Hustles")
-        st.write("If you earn over $400 via freelancing (DoorDash, Upwork, Etsy), you are a business owner in the eyes of the IRS.")
-        st.warning("⚠️ You must set aside roughly 25-30% of your earnings for taxes, as no boss is withholding them for you.")
-        ans = st.radio("What tax form do freelancers usually receive?", ["W-2", "1099-NEC", "1040-EZ"])
-        if st.button("Submit Quiz"):
-            if ans == "1099-NEC": st.success("Correct! +25 XP"); supabase.table("profiles").update({"points": profile['points']+25}).eq("username", username).execute()
-
+    # 1. COMPOUNDING
+    st.markdown("<div class='stLessonCard'>", unsafe_allow_html=True)
+    st.markdown("### 📈 Course 1: The Velocity of Compounding Architecture")
+    st.write("Compounding functions as calculation architecture where your yields generate additional subsequent returns over time. Rather than withdrawing asset gains, capital values reinvest continually, creating geometric growth lines.")
+    st.latex(r"A = P(1 + r/n)^{nt}")
+    st.write("Starting early is a massive multiplier. Investing a small amount at age 20 creates exponentially more asset scale than chasing larger contributions starting at age 35 due to the runway available for interest to multiply.")
     st.markdown("</div>", unsafe_allow_html=True)
+
+    # 2. 50/30/20 RULE
+    st.markdown("<div class='stLessonCard'>", unsafe_allow_html=True)
+    st.markdown("### 🎛️ Course 2: Tactical Capital Allocation (The 50/30/20 Rule)")
+    st.write("Budget engineering fails when rules are too strict. The industry standard allocation divides post-tax metrics into clear structural categories:")
+    st.markdown("- **50% Needs:** Housing, fixed transportation, utilities, and raw grocery baselines.")
+    st.markdown("- **30% Wants:** Entertainment channels, streaming networks, luxury dining, and hobbies.")
+    st.markdown("- **20% Financial Future:** Equities portfolios, index funds, retirement accounts, and debt clear downs.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # 3. CREDIT SCORES
+    st.markdown("<div class='stLessonCard'>", unsafe_allow_html=True)
+    st.markdown("### 💳 Course 3: Credit Architecture & Institutional Trust")
+    st.write("Credit scores operate as algorithmic measures determining borrowing risks. Your payment history accounts for 35% of this calculation score, while credit utilization makes up 30%.")
+    st.write("To establish clean, scalable ratings before graduation, keep rolling balances strictly below 30% of total available revolving limits and avoid missed payment windows completely.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # 4. INDEX FUNDS & ETFS
+    st.markdown("<div class='stLessonCard'>", unsafe_allow_html=True)
+    st.markdown("### 🏛️ Course 4: Index Funds & Passive Market Capture")
+    st.write("Instead of risking your capital picking single individual company stocks (like Apple or Tesla), index funds purchase tiny fractions of the entire market simultaneously (e.g., the S&P 500 basket).")
+    st.write("This structure offers built-in diversification. Historically, broad market indexes average an annual return of roughly 7-10% over long horizons, outperforming more than 90% of actively managed professional funds.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # 5. EMERGENCY FUNDS
+    st.markdown("<div class='stLessonCard'>", unsafe_allow_html=True)
+    st.markdown("### 🛡️ Course 5: The Liquidity Safety Buffer (Emergency Funds)")
+    st.write("An emergency fund acts as an insulation layer between unexpected real-world shocks (medical needs, automotive repairs, or job transitions) and your investment assets.")
+    st.write("Financial security standards dictate maintaining 3 to 6 months of baseline living expenses entirely in liquid assets. This capital should remain accessible inside non-volatile checking or specialized High-Yield Savings Accounts (HYSAs).")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # 6. SIDE-HUSTLE TAXES
+    st.markdown("<div class='stLessonCard'>", unsafe_allow_html=True)
+    st.markdown("### 🧾 Course 6: Taxation Dynamics for Freelancers & Operators")
+    st.write("Generating income outside a traditional employee paycheck (e.g., freelancing, independent design contracts, content creation) subjects your capital to self-employment tax criteria.")
+    st.write("Because independent contractors do not have tax withholding subtracted automatically from their payments, you must proactively reserve roughly 25-30% of gross independent income streams to cover regular quarterly tax submissions.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # 7. INFLATION ARBITRAGE
+    st.markdown("<div class='stLessonCard'>", unsafe_allow_html=True)
+    st.markdown("### 💸 Course 7: Inflation Dynamics & Asset Erosion")
+    st.write("Inflation is the steady drop in a currency's purchasing power over time. When inflation tracks at 3% annually, a basket of goods costing $100 this year will command $103 next year.")
+    st.write("Leaving long-term cash sitting idle in traditional checking accounts yielding 0.01% guarantees real wealth loss. To maintain and grow your wealth, your capital must be deployed into assets that yield returns higher than the baseline rate of inflation.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # 8. DEBT LEVERAGE
+    st.markdown("<div class='stLessonCard'>", unsafe_allow_html=True)
+    st.markdown("### ⚖️ Course 8: Evaluating High vs. Low Cost Debt Leverage")
+    st.write("Not all debt liabilities carry the same structural impact. High-cost debt—like credit cards averaging 20-30% interest rates—drains your cash flow and must be paid down immediately.")
+    st.write("Conversely, low-cost debt, such as subsidized student loans or mortgages under 4-5%, can be managed systematically. This allows you to route extra savings into investments that generate higher average returns.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # --- UNIFIED ACADEMY GRADUATION QUIZ ---
+    st.markdown("### 🎯 Master Comprehensive Academy Quiz")
+    st.write("Answer the foundational multi-variable question below based on the 8 core modules above to graduate the track.")
+    
+    quiz_choice = st.radio(
+        "Based on the curriculum guidelines, which option outlines the ideal path for a student with $1,000 in a credit card balance (24% interest), an un-diversified portfolio, and no emergency reserves?",
+        [
+            "Ignore the credit card balance, maximize exposure to one high-volatility stock, and open a traditional checking account.",
+            "Use available cash to immediately pay off the 24% credit card balance (high-cost debt), build a 3-6 month cash emergency fund in a HYSA, and then invest long-term cash into diversified Index Funds.",
+            "Keep all assets liquid inside a safe at home to avoid inflation effects entirely, and pay only the minimum balance required on the credit card statement."
+        ]
+    )
+    
+    if st.button("Submit Comprehensive Assessment Summary", use_container_width=True):
+        if "immediately pay off" in quiz_choice:
+            st.success("🎉 Exceptional! You have accurately synchronized all 8 foundational courses. +100 XP added directly to your profile database!")
+            try:
+                supabase.table("profiles").update({"points": current_points + 100}).eq("username", username).execute()
+                st.rerun()
+            except Exception: pass
+        else:
+            st.error("❌ Evaluation misalignment. Review the high-cost debt clearance parameters and broad diversification rules above before resubmitting.")
 
 def show_budgeting(username):
     st.markdown("## 📉 Budgeting Tracker")
@@ -210,35 +253,51 @@ def show_splitting():
     people = st.slider("Number of People", 2, 10, 3)
     st.success(f"Each person owes: **${round(bill/people, 2)}**")
 
-# --- APP NAVIGATION ---
+# --- APP NAVIGATION HUB ---
 if st.session_state.username is None:
     login_page()
 else:
     profile = fetch_user_profile(st.session_state.username)
     
-    # Sidebar Navigation
+    # Custom Sidebar Navigation layout (No round check-boxes)
     with st.sidebar:
         st.title("FinSmart Nav")
         st.markdown(f"**User:** {st.session_state.username.upper()}")
-        st.markdown(f"**XP:** 🏅 {profile['points']}")
+        user_points = profile['points'] if profile else 0
+        st.markdown(f"**XP:** 🏅 {user_points}")
         st.markdown("---")
         
-        nav = st.radio("Go To:", [
-            "📊 Personal Finance Desk",
-            "📚 Micro-Courses",
-            "📉 Budgeting Tracker",
-            "🐷 Savings Accelerator",
-            "👥 Friends Splitting Matrix"
-        ])
+        st.markdown("#### Navigation Links")
+        if st.button("📊 Personal Finance Desk"):
+            st.session_state.nav_selection = "📊 Personal Finance Desk"
+            st.rerun()
+        if st.button("📚 Micro-Courses"):
+            st.session_state.nav_selection = "📚 Micro-Courses"
+            st.rerun()
+        if st.button("📉 Budgeting Tracker"):
+            st.session_state.nav_selection = "📉 Budgeting Tracker"
+            st.rerun()
+        if st.button("🐷 Savings Accelerator"):
+            st.session_state.nav_selection = "🐷 Savings Accelerator"
+            st.rerun()
+        if st.button("👥 Friends Splitting Matrix"):
+            st.session_state.nav_selection = "👥 Friends Splitting Matrix"
+            st.rerun()
         
         st.markdown("---")
         if st.button("🚪 Logout"):
             st.session_state.username = None
+            st.session_state.nav_selection = "📊 Personal Finance Desk"
             st.rerun()
 
-    # Page Routing
-    if nav == "📊 Personal Finance Desk": show_finance_desk(profile, st.session_state.username)
-    elif nav == "📚 Micro-Courses": show_micro_courses(profile, st.session_state.username)
-    elif nav == "📉 Budgeting Tracker": show_budgeting(st.session_state.username)
-    elif nav == "🐷 Savings Accelerator": show_savings()
-    elif nav == "👥 Friends Splitting Matrix": show_splitting()
+    # Route to page via saved session selection metrics
+    if st.session_state.nav_selection == "📊 Personal Finance Desk": 
+        show_finance_desk(profile, st.session_state.username)
+    elif st.session_state.nav_selection == "📚 Micro-Courses": 
+        show_micro_courses(profile, st.session_state.username)
+    elif st.session_state.nav_selection == "📉 Budgeting Tracker": 
+        show_budgeting(st.session_state.username)
+    elif st.session_state.nav_selection == "🐷 Savings Accelerator": 
+        show_savings()
+    elif st.session_state.nav_selection == "👥 Friends Splitting Matrix": 
+        show_splitting()
