@@ -16,12 +16,12 @@ def init_supabase() -> Client:
 
 supabase = init_supabase()
 
-# --- THE FINORA MASTER THEME OVERHAUL ---
-st.set_page_config(page_title="Finora | Next-Gen Student Wealth Hub", page_icon="💳", layout="wide")
+# --- THE FINORA PREMIUM CLEAN UI THEME ---
+st.set_page_config(page_title="Finora | Simple Student Wealth Hub", page_icon="💳", layout="wide")
 
 st.markdown("""
     <style>
-    /* Absolute Structural Clean-up to Prevent Header Clipping & Drop Blank Space */
+    /* Prevent Header Clipping & Drop Blank Space */
     [data-testid="stHeader"] {background: transparent; height: 0rem;}
     div.block-container {padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important;}
     #root > div:nth-child(1) > div > div > div {padding-top: 0px !important;}
@@ -50,7 +50,7 @@ st.markdown("""
         margin-bottom: 10px !important;
     }
     
-    /* Re-Engineered Component Cards with Soft Gradients and Drop Shadows */
+    /* Component Cards with Soft Gradients and Drop Shadows */
     .metric-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
@@ -70,14 +70,14 @@ st.markdown("""
     .ledger-row {
         display: flex;
         justify-content: space-between;
-        padding: 8px 12px;
+        padding: 10px 14px;
         background: #f8fafc;
-        border-radius: 6px;
+        border-radius: 8px;
         margin-bottom: 6px;
-        border-left: 3px solid #cbd5e1;
+        border-left: 4px solid #cbd5e1;
     }
     
-    /* Fully Polished Interactive Sidebar Control Array */
+    /* Interactive Sidebar Control Array */
     div.stButton > button:first-child {
         text-align: left !important;
         justify-content: flex-start !important;
@@ -138,41 +138,41 @@ if "page_idx" not in st.session_state:
 # --- LOGIN SCREEN ---
 def login_page():
     st.markdown("<div style='text-align: center; margin-bottom: 10px;'><span class='main-header'>✨ Finora Hub</span></div>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #64748b; font-size:15px; margin-top: -12px; margin-bottom: 24px;'>Automated Budget Envelopes, Real-time Splitters & Gamified Wealth Architecture</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #64748b; font-size:15px; margin-top: -12px; margin-bottom: 24px;'>Easy Money Tracking, Bill Splitting, and Simple Lessons for Students</p>", unsafe_allow_html=True)
     
     _, col2, _ = st.columns([1.4, 1.2, 1.4])
     with col2:
-        tab1, tab2 = st.tabs(["🔒 Account Login", "📝 Create Finora Profile"])
+        tab1, tab2 = st.tabs(["🔒 Log In", "📝 Create Free Account"])
         with tab1:
             with st.form("login_form"):
-                user_input = st.text_input("Username Ident", placeholder="e.g. rahul_123").strip().lower()
-                pass_input = st.text_input("Password Ident", type="password", placeholder="••••••••")
-                if st.form_submit_button("Launch Dashboard Panel", use_container_width=True):
+                user_input = st.text_input("Username", placeholder="e.g. rahul_123").strip().lower()
+                pass_input = st.text_input("Password", type="password", placeholder="••••••••")
+                if st.form_submit_button("Open My Dashboard", use_container_width=True):
                     profile = fetch_user_profile(user_input)
                     if profile and profile['password_hash'] == hash_password(pass_input):
                         st.session_state.username = user_input
                         st.rerun()
                     else:
-                        st.error("Incorrect username or security password pattern.")
+                        st.error("Incorrect username or password.")
         with tab2:
             with st.form("reg_form"):
-                new_user = st.text_input("Choose Public Username").strip().lower()
-                new_pass = st.text_input("Choose Master Password", type="password")
-                occ = st.selectbox("Track Matrix Selection:", ["Undergraduate Student", "Freelancer Track", "High School Student", "Self-Employed Founder"])
-                if st.form_submit_button("Deploy My Account Structure", use_container_width=True):
+                new_user = st.text_input("Pick a Username").strip().lower()
+                new_pass = st.text_input("Pick a Strong Password", type="password")
+                occ = st.selectbox("What do you do right now?", ["College Student", "Freelancer", "School Student", "Self-Employed / Founder"])
+                if st.form_submit_button("Create My Account", use_container_width=True):
                     if new_user and new_pass:
                         try:
                             supabase.table("profiles").insert({
                                 "username": new_user, "password_hash": hash_password(new_pass),
                                 "age": 19, "occupation": occ, "points": 0
                             }).execute()
-                            st.success("Finora pipeline initialized! Please switch tabs to login.")
-                        except APIError: st.error("Username index registry collision.")
+                            st.success("Account created! You can now log in using the first tab.")
+                        except APIError: st.error("That username is already taken.")
 
 # --- WORKSPACE PANELS ---
 
 def show_finance_desk(profile, username):
-    st.markdown("<p class='section-header'>📊 Control Center Dashboard Analytics</p>", unsafe_allow_html=True)
+    st.markdown("<p class='section-header'>📊 Your Financial Dashboard</p>", unsafe_allow_html=True)
     left_panel, right_panel = st.columns([1.6, 1.4])
     
     res = supabase.table("expenses").select("*").eq("username", username).execute()
@@ -186,64 +186,75 @@ def show_finance_desk(profile, username):
 
         st.markdown(f"""
         <div class="metric-card" style="border-top: 4px solid #10b981; background: linear-gradient(180deg, #ffffff 0%, #fdfdfd 100%);">
+            <h5 style="margin: 0 0 10px 0; color: #1e293b; font-weight:700;">Account Profile Summary</h5>
             <table style="width:100%; border:none; margin:0; line-height: 1.6;">
-                <tr><td style="padding:4px; font-size:14.5px; color:#64748b; font-weight:500;">Profile Track Model</td><td style="padding:4px; font-size:14.5px; font-weight:700; text-align:right; color:#0f172a;">{standing}</td></tr>
-                <tr><td style="padding:4px; font-size:14.5px; color:#64748b; font-weight:500;">Learning Progression</td><td style="padding:4px; font-size:14.5px; font-weight:700; text-align:right; color:#0284c7;">🏅 {points} XP Available</td></tr>
-                <tr><td style="padding:4px; font-size:14.5px; color:#64748b; font-weight:500;">Academy Standing Tier</td><td style="padding:4px; font-size:14.5px; font-weight:700; text-align:right; color:#10b981;">{level}</td></tr>
+                <tr><td style="padding:4px; font-size:14.5px; color:#64748b; font-weight:500;">Your Current Focus:</td><td style="padding:4px; font-size:14.5px; font-weight:700; text-align:right; color:#0f172a;">{standing}</td></tr>
+                <tr><td style="padding:4px; font-size:14.5px; color:#64748b; font-weight:500;">Lesson Score:</td><td style="padding:4px; font-size:14.5px; font-weight:700; text-align:right; color:#0284c7;">🏅 {points} XP Earned</td></tr>
+                <tr><td style="padding:4px; font-size:14.5px; color:#64748b; font-weight:500;">Finora Badge Rank:</td><td style="padding:4px; font-size:14.5px; font-weight:700; text-align:right; color:#10b981;">{level}</td></tr>
             </table>
         </div>
         """, unsafe_allow_html=True)
         
-        # FEATURE ADDITION: Dynamic Financial Health Radar Engine
+        # FEATURE ADDITION: Dynamic Financial Health Alert Box
         rem_pct = max(((budget_max - total_spent) / budget_max) * 100, 0.0)
         health_color = "#10b981" if rem_pct > 40 else "#f59e0b" if rem_pct > 15 else "#ef4444"
-        health_label = "Optimal Status (Excellent)" if rem_pct > 40 else "Warning Profile (Caution)" if rem_pct > 15 else "Critical Violation (Danger)"
+        health_label = "Great Job! Your spending looks super healthy." if rem_pct > 40 else "Careful. You are spending money a bit too fast this month." if rem_pct > 15 else "Danger! You have almost run out of spending money."
         
         st.markdown(f"""
         <div class="metric-card" style="border-left: 5px solid {health_color};">
-            <span style="font-size:12px; color:#64748b; font-weight:700; letter-spacing:0.5px;">❤️ DYNAMIC FINANCIAL HEALTH RADAR</span><br/>
-            <span style="font-size:15px; color:#1e293b;">Projected Safe Capital Buffer Rate: <b>{rem_pct:.1f}% Remaining</b></span><br/>
-            <span style="font-size:13px; color:{health_color}; font-weight:700;">System Diagnostic: {health_label}</span>
+            <span style="font-size:12px; color:#64748b; font-weight:700; letter-spacing:0.5px;">❤️ FINANCIAL HEALTH STATUS</span><br/>
+            <span style="font-size:15px; color:#1e293b;">You still have <b>{rem_pct:.1f}%</b> of your monthly safety budget left.</span><br/>
+            <span style="font-size:13px; color:{health_color}; font-weight:700; display:inline-block; margin-top:4px;">Finora Advice: {health_label}</span>
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>⚡ Instant Outflow Pipeline</p>", unsafe_allow_html=True)
+        # FEATURE ADDITION: Daily Spending Guidelines
+        daily_allowance = max((budget_max - total_spent) / 30, 0.0)
+        st.markdown(f"""
+        <div class="metric-card" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+            <span style="font-size:12px; color:#475569; font-weight:700; letter-spacing:0.5px;">📅 DAILY BUDGET GUIDELINE</span><br/>
+            <span style="font-size:14.5px; color:#1e293b;">To stay safe until the end of the month, try not to spend more than <b>₹{daily_allowance:,.2f} per day</b>.</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>⚡ Add an Expense Quickly</p>", unsafe_allow_html=True)
         with st.form("quick_log_form", clear_on_submit=True):
             q_col1, q_col2, q_col3 = st.columns([1.5, 1.1, 1.1])
-            with q_col1: q_cat = st.selectbox("Asset Class Bucket", ["Food & Dining", "Education & Books", "Rent & Bills", "Entertainment & Leisure", "Mutual Funds & SIPs"], key="q_cat")
-            with q_col2: q_amt = st.number_input("Value Scale (₹)", min_value=1.0, value=100.0, step=10.0, key="q_amt")
+            with q_col1: q_cat = st.selectbox("What was this for?", ["Food & Dining", "Education & Books", "Rent & Bills", "Entertainment & Leisure", "Mutual Funds & Investments"], key="q_cat")
+            with q_col2: q_amt = st.number_input("Amount (₹)", min_value=1.0, value=100.0, step=10.0, key="q_amt")
             with q_col3: 
                 st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True)
-                q_sub = st.form_submit_button("Log To Cloud Ledger", use_container_width=True)
+                q_sub = st.form_submit_button("Save Expense", use_container_width=True)
             if q_sub:
                 supabase.table("expenses").insert({"username": username, "category": q_cat, "amount": q_amt}).execute()
-                st.toast("Expense synced successfully!", icon="✅")
+                st.toast("Expense saved successfully!", icon="✅")
                 st.rerun()
 
     with right_panel:
+        st.markdown("<p style='font-size: 16px; font-weight: 700; color:#1e293b; margin-bottom:4px;'>📊 Spending Breakdown Graph</p>", unsafe_allow_html=True)
         if res.data:
             df = pd.DataFrame(res.data)
             df['amount'] = df['amount'].astype(float)
             fig = px.pie(df, values='amount', names='category', hole=0.62, color_discrete_sequence=px.colors.qualitative.Safe)
-            fig.update_layout(height=250, margin=dict(t=15, b=15, l=15, r=15), showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            fig.update_layout(height=260, margin=dict(t=15, b=15, l=15, r=15), showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.markdown("<div style='height:240px; display:flex; align-items:center; justify-content:center; background:#f8fafc; border: 1px dashed #cbd5e1; border-radius:14px; color:#64748b; font-size:14px; margin-top:4px;'>Allocation tracking metrics will automatically render visual graphs once an item is logged.</div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:240px; display:flex; align-items:center; justify-content:center; background:#f8fafc; border: 1px dashed #cbd5e1; border-radius:14px; color:#64748b; font-size:14px; margin-top:4px; text-align:center; padding:20px;'>Your personal pie chart will show up here as soon as you type in your first expense!</div>", unsafe_allow_html=True)
 
 def show_micro_courses(profile, username):
     courses = [
-        "Course 1: The Power of Compounding",
+        "Course 1: The Magic of Compounding",
         "Course 2: Simple Budgeting Rules (50/30/20)",
         "Course 3: How Credit Scores Work",
         "Course 4: Index Funds & Passive Investing",
-        "Course 5: Mutual Funds & SIP Mechanics",
+        "Course 5: Mutual Funds & Monthly Savings Plans (SIP)",
         "Course 6: Demystifying Health & Life Insurance",
         "Course 7: Crypto, Blockchain & Digital Assets",
         "Course 8: Avoiding the Credit Card Debt Trap"
     ]
     
     h_col1, h_col2 = st.columns([1.8, 2.2])
-    with h_col1: st.markdown("<p class='section-header'>📚 Interactive Gamified Academy Runway</p>", unsafe_allow_html=True)
+    with h_col1: st.markdown("<p class='section-header'>📚 Finora Fun Interactive Academy</p>", unsafe_allow_html=True)
     with h_col2:
         sel_course = st.selectbox("Topic Selector", courses, index=st.session_state.course_idx, label_visibility="collapsed")
         new_course_idx = courses.index(sel_course)
@@ -258,102 +269,109 @@ def show_micro_courses(profile, username):
 
     total_steps = 32
     current_step = (c_idx * 4) + p_idx
-    st.progress(current_step / total_steps, text=f"Academy Profile Tracking Matrix: {int((current_step/total_steps)*100)}% Complete (Module Page {current_step}/{total_steps})")
+    st.progress(current_step / total_steps, text=f"Total Course Progress: {int((current_step/total_steps)*100)}% Completed (Page {current_step}/{total_steps})")
     
-    st.markdown(f"<div class='stLessonCard'><span style='color:#10b981; font-weight:800; font-size:11.5px; letter-spacing:1px;'>CURRICULUM NODE • UNIT {p_idx} OF 4</span>", unsafe_allow_html=True)
+    st.markdown(f"<div class='stLessonCard'><span style='color:#10b981; font-weight:800; font-size:11.5px; letter-spacing:1px;'>YOUR LESSON CARD • PAGE {p_idx} OF 4</span>", unsafe_allow_html=True)
 
     if c_idx == 0:
         if p_idx == 1:
-            st.markdown("### The Structural Mechanics of Compounding")
-            st.write("Compounding operates as a cumulative reward architecture where your yields earn independent yields. Reinvesting asset returns instead of liquidating them triggers an exponential wealth curve.")
+            st.markdown("### The Magic of Growing Your Money Automatically")
+            st.write("Imagine earning rewards on your money, and then earning **even more rewards on top of those rewards**! That is how money grows over time. When you leave your extra cash or your interest returns alone instead of spending them instantly, your balance starts to grow larger and faster every single year.")
+            st.write("**💡 Real World Example:** If you save a small amount every single month while you are in college, that money has decades to grow quietly in the background. It will end up much bigger than if you tried to save a massive lump sum later in life.")
         elif p_idx == 2:
-            st.markdown("### Predictive Rule Models: The Framework of 72")
-            st.write("Divide the standard baseline constant score of **72** by your expected constant annualized rate of return to reveal exactly how many years it takes your asset base to double.")
-            st.latex(r"Years\ to\ Double = \frac{72}{Interest\ Rate}")
+            st.markdown("### Simple Shortcuts: The Rule of 72")
+            st.write("Want to know exactly how many years it will take for your saved money to double in size? There is a beautiful mathematical shortcut called the **Rule of 72**. All you have to do is divide the number **72** by the yearly growth rate your account gives you.")
+            st.latex(r"Years\ to\ Double\ Your\ Money = \frac{72}{Yearly\ Growth\ Rate}")
+            st.write("**📋 Quick Checklist:**\n* If an investment grows at 6% a year, it takes 12 years to double ($72 / 6 = 12$).\n* If it grows at 12% a year, it takes just 6 years to double ($72 / 12 = 6$)!")
         elif p_idx == 3:
-            st.markdown("### Exponential Mathematical Equations")
-            st.write("The underlying algebraic projection engine utilized globally to run mathematical compound tracking arrays across retail markets:")
+            st.markdown("### The Basic Growth Formula")
+            st.write("For those who love seeing the simple math behind the scenes, here is the official formula used around the world to track how money multiplies over time:")
             st.latex(r"A = P\left(1 + \frac{r}{n}\right)^{nt}")
+            st.write("**What these letters mean in plain English:**\n* **A** = How much total money you will have at the end.\n* **P** = The starting cash balance you began with.\n* **r** = The yearly growth rate.\n* **t** = The number of years you leave it to grow.")
         elif p_idx == 4:
-            st.markdown("### 🎯 Automated Validation Assessment")
-            ans = st.radio("If you deploy ₹1,000 at a fixed 10% annual compounding velocity model, what is the exact cash profile value tracking at the end of Year Two?", ["₹1,200.00", "₹1,210.00", "₹1,100.00"])
-            if st.button("Submit Profile Answer"):
-                if ans == "₹1,210.00": st.success("Excellent Engineering Evaluation! +25 Finora XP Synced."); supabase.table("profiles").update({"points": current_points + 25}).eq("username", username).execute(); st.rerun()
-                else: st.error("Calculation mismatch. Remember that Year Two calculates yield parameters off the Year One exit valuation matrix (₹1,100).")
+            st.markdown("### 🎯 Quick Pop Quiz!")
+            ans = st.radio("If you save ₹1,000 at a 10% interest rate that builds on itself every year, how much total money do you have after 2 years?", ["₹1,200.00", "₹1,210.00", "₹1,100.00"])
+            if st.button("Check My Quiz Answer"):
+                if ans == "₹1,210.00": st.success("Awesome job! You got it right! +25 Finora XP added to your profile."); supabase.table("profiles").update({"points": current_points + 25}).eq("username", username).execute(); st.rerun()
+                else: st.error("Not quite! Remember, in the second year, you earn interest on top of the first year's interest too. Try again!")
 
     elif c_idx == 4:
         if p_idx == 1:
-            st.markdown("### Mutual Funds & Diversification Layouts")
-            st.write("Mutual Funds mathematically combine investment structures from retail accounts to source highly diversified baskets of debt instruments and underlying stocks, decreasing unique single-asset downside traps.")
+            st.markdown("### What is a Mutual Fund?")
+            st.write("A Mutual Fund is like a giant money pool. Thousands of everyday people put their small savings together, and a professional manager uses that massive pool of cash to buy tiny pieces of hundreds of different stable companies like Apple, Google, or Tata.")
+            st.write("**🌟 Why this helps you:** If one single company goes out of business, you do not lose your shirt because you still own tiny pieces of hundreds of other healthy companies that protect your cash.")
         elif p_idx == 2:
-            st.markdown("### Systematic Investment Architectures (SIP)")
-            st.write("SIP setups deploy small structured allocations automatically month over month. This locks in **Rupee Cost Averaging**, naturally buying fewer total fund shares when prices climb and more when values decline.")
+            st.markdown("### Saving Every Month Automatically (SIP)")
+            st.write("A Systematic Investment Plan (or **SIP** for short) is just a fancy way of saying: *'Set it and forget it.'* It automatically moves a tiny amount of cash (like ₹500) from your regular bank account into your investments on the exact same day every single month.")
+            st.write("**🚀 The Superpower:** This protects you from bad timing. When prices drop in the market, your regular ₹500 automatically buys **more** cheap shares. When prices are sky-high, it buys fewer shares. Over time, this smooths out into a winning strategy.")
         elif p_idx == 3:
-            st.markdown("### Internal Management Overhead: Expense Ratios")
-            st.write("Keep a sharp eye on the **Expense Ratio** metrics (the flat fee charged by portfolio management teams). Choosing Direct fund routes removes middlemen brokers and preserves significant capital gains long-term.")
+            st.markdown("### Watch Out For Hidden Management Fees!")
+            st.write("Every mutual fund charges a small annual fee to pay the management team. This fee is called the **Expense Ratio**. Always look for **'Direct'** funds instead of **'Regular'** funds. Regular funds have middleman fees built in, while Direct funds skip the middleman and can save you lakhs of rupees over time.")
         elif p_idx == 4:
-            st.markdown("### 🎯 Automated Validation Assessment")
-            ans = st.radio("Which deployment protocol utilizes systematic dollar/rupee cost averaging mechanics across volatile markets?", ["Market Timing Speculation", "Systematic Investment Plan (SIP) Averaging", "Leveraged Margin Swaps"])
-            if st.button("Submit Profile Answer"):
-                if "SIP" in ans: st.success("Correct! +25 Finora XP Synced."); supabase.table("profiles").update({"points": current_points + 25}).eq("username", username).execute(); st.rerun()
+            st.markdown("### 🎯 Quick Pop Quiz!")
+            ans = st.radio("What is the easiest way to safely buy more shares of a mutual fund automatically when prices drop?", ["Trying to guess the exact best day to trade", "Setting up a monthly automatic plan (SIP)", "Buying volatile single stocks on rumors"])
+            if st.button("Check My Quiz Answer"):
+                if "SIP" in ans: st.success("Perfect! Regular automated monthly plans are the safest way to grow wealth. +25 Finora XP added."); supabase.table("profiles").update({"points": current_points + 25}).eq("username", username).execute(); st.rerun()
 
     elif c_idx == 7:
         if p_idx == 1:
-            st.markdown("### Credit Instruments & Consumer Ratings")
-            st.write("Credit card options are valuable tools for stabilizing consumer metrics and earning purchase rebates, but they function strictly as high-cost short term lines of liability—not free supplemental income.")
+            st.markdown("### How Credit Cards Really Work")
+            st.write("A credit card can be a wonderful helper. It lets you buy things safely, gives you cashback rewards, and helps you build a good reputation with banks. But it is vital to remember: **credit cards are temporary loans, not free income.**")
         elif p_idx == 2:
-            st.markdown("### The Minimum Balance Target Trap")
-            st.write("Clearing only the 'Minimum Balance Due' protects you from fixed penalty markers but allows banks to charge high-cost interest rates (**36% to 45%+ annualized**) on your remaining balance.")
+            st.markdown("### The Minimum Balance Trick")
+            st.write("When your credit card bill arrives, the bank will show you a tiny number called the **'Minimum Balance Due'** (usually just 5% of the total bill). If you only pay this tiny amount, the bank will not charge you a late fee, but they will start charging you massive interest rates (**up to 40% a year!**) on the rest of your debt.")
+            st.write("**⚠️ The Danger:** Paying only the minimum amount is a trap that can keep you trapped in debt for years.")
         elif p_idx == 3:
-            st.markdown("### System Operational Guardrails")
-            st.write("1. Check card transactions against real liquid deposits. If your checking balance cannot support it right now, **do not swipe.**\n2. Configure automated settings to pay off the **Total Statement Balance** in full every month.")
+            st.markdown("### Two Golden Card Rules to Live By")
+            st.write("1. **Treat it like cash:** If you do not have the real money inside your bank checking account right now to buy that item, **do not swipe your card for it.**\n2. **Turn on Auto-Pay:** Set your card app to automatically pay off the **Total Statement Balance** in full every single month so you never pay a single rupee of interest.")
         elif p_idx == 4:
-            st.markdown("### 🎯 Automated Validation Assessment")
-            ans = st.radio("What happens if an account updates only the 'Minimum Balance Due' on standard statement loops?", ["The leftover principal debt is automatically erased", "The credit line compounds brutal interest rates (up to 40%+) against the remaining base debt", "Your profile rating increases instantly"])
-            if st.button("Submit Profile Answer"):
-                if "compounds high interest" in ans: st.success("Correct System Determination! +25 Finora XP Synced."); supabase.table("profiles").update({"points": current_points + 25}).eq("username", username).execute(); st.rerun()
+            st.markdown("### 🎯 Quick Pop Quiz!")
+            ans = st.radio("What happens if you only pay the 'Minimum Amount Due' on a credit card statement bill?", ["The bank forgives the rest of your debt for free", "The bank begins charging you brutal interest rates (up to 40%+) on the remaining balance", "Your credit score instantly hits a perfect rating"])
+            if st.button("Check My Quiz Answer"):
+                if "charging you brutal interest" in ans: st.success("Spot on! Always pay the full statement balance to stay safe. +25 Finora XP added."); supabase.table("profiles").update({"points": current_points + 25}).eq("username", username).execute(); st.rerun()
 
     else:
         if p_idx < 4:
             st.markdown(f"### {courses[c_idx]} (Section {p_idx})")
-            st.write("This Finora academy learning block details optimization frameworks regarding compliance targets, personal tax paths, emergency buffer reserves, and portfolio allocations.")
+            st.write("This simple Finora lesson is designed to teach you actionable money habits step-by-step. You will learn how to organize your cash, avoid bad debt, and start building long-term security.")
         else:
-            st.markdown("### 🎯 Comprehensive Track Quiz")
-            ans = st.radio("Identify the optimized framework to achieve financial independence:", ["Keep extra cash liquid in checking portfolios", "Pay down high-interest debt, build an emergency cushion, and set up automated monthly index fund investments", "Trade volatile digital currencies on leverage margins"])
-            if st.button("Submit Profile Answer"):
-                if "Pay down high-interest" in ans: st.success("Correct Tracking! +25 Finora XP Synced."); supabase.table("profiles").update({"points": current_points + 25}).eq("username", username).execute(); st.rerun()
+            st.markdown("### 🎯 Final Review Quiz")
+            ans = st.radio("What is the best everyday framework to build reliable personal wealth?", ["Keep all extra money sitting in a zero-interest wallet", "Pay off expensive debt, keep a small cash safety cushion, and invest monthly in simple index funds", "Day-trade random digital coins with borrowed money"])
+            if st.button("Check My Quiz Answer"):
+                if "Pay off expensive debt" in ans: st.success("Brilliant! You completed the quiz. +25 Finora XP added."); supabase.table("profiles").update({"points": current_points + 25}).eq("username", username).execute(); st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
 
     nav_col1, _, nav_col3 = st.columns([1, 2, 1])
     with nav_col1:
         if p_idx > 1:
-            if st.button("⬅️ Previous Node", use_container_width=True): st.session_state.page_idx -= 1; st.rerun()
+            if st.button("⬅️ Go Back", use_container_width=True): st.session_state.page_idx -= 1; st.rerun()
     with nav_col3:
         if p_idx < 4:
-            if st.button("Advance Node ➡️", use_container_width=True): st.session_state.page_idx += 1; st.rerun()
+            if st.button("Next Page ➡️", use_container_width=True): st.session_state.page_idx += 1; st.rerun()
 
 def show_budgeting(username):
-    st.markdown("<p class='section-header'>📉 Envelope Budgets & Real-time Cloud Ledger</p>", unsafe_allow_html=True)
+    st.markdown("<p class='section-header'>📉 Money Envelopes & Expense Tracker</p>", unsafe_allow_html=True)
     col1, col2 = st.columns([1.2, 1.8])
     with col1:
         with st.form("exp_form", clear_on_submit=True):
-            cat = st.selectbox("Allocation Envelope Group", ["Food & Dining", "Education & Books", "Rent & Bills", "Entertainment & Leisure", "Mutual Funds & SIPs"])
-            amt = st.number_input("Transaction Value Amount (₹)", min_value=1.0, value=500.0, step=50.0)
-            if st.form_submit_button("Record Transaction Entry", use_container_width=True):
+            st.markdown("<p style='font-size:15px; font-weight:700; margin:0; color:#334155;'>Log an Expense</p>", unsafe_allow_html=True)
+            cat = st.selectbox("What bucket does this fit into?", ["Food & Dining", "Education & Books", "Rent & Bills", "Entertainment & Leisure", "Mutual Funds & Investments"])
+            amt = st.number_input("How much did you spend? (₹)", min_value=1.0, value=500.0, step=50.0)
+            if st.form_submit_button("Record Expense Entry", use_container_width=True):
                 supabase.table("expenses").insert({"username": username, "category": cat, "amount": amt}).execute()
                 st.rerun()
                 
-        # FEATURE ADDITION: Dynamic Personalized Emergency Runway Calculator
+        # FEATURE ADDITION: Simple Emergency Safety Cushion Advisor
         st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
         res_p = supabase.table("profiles").select("occupation").eq("username", username).execute()
         track = res_p.data[0]['occupation'] if res_p.data else "Student"
-        months_recommended = 6 if "Freelancer" in track or "Founder" in track else 4
-        target_reserve = 8000.0 * months_recommended
+        months_needed = 6 if "Freelancer" in track or "Founder" in track else 4
+        safety_total = 8000.0 * months_needed
         st.markdown(f"""
-        <div class="metric-card" style="background:#f0fdfa; border: 1px solid #ccfbf1;">
-            <span style="font-size:11.5px; color:#0f766e; font-weight:700; letter-spacing:0.5px;">🛡️ DEFENSIVE RUNWAY ARCHITECT</span><br/>
-            <span style="font-size:13.5px; color:#115e59;">Based on your <b>{track}</b> track, you require a <b>{months_recommended}-Month</b> emergency cushion. Target Target Reserve: <b>₹{target_reserve:,.2f}</b></span>
+        <div class="metric-card" style="background:#f0fdfa; border: 1px solid #ccfbf1; margin-top:12px;">
+            <span style="font-size:11.5px; color:#0f766e; font-weight:700; letter-spacing:0.5px;">🛡️ YOUR CASH SAFETY CUSHION</span><br/>
+            <span style="font-size:13.5px; color:#115e59;">Because you are a <b>{track}</b>, we recommend keeping a <b>{months_needed}-Month Safety Fund</b> worth at least <b>₹{safety_total:,.2f}</b> in a safe bank account for sudden emergencies.</span>
         </div>
         """, unsafe_allow_html=True)
                 
@@ -363,16 +381,16 @@ def show_budgeting(username):
         
         st.markdown(f"""
         <div class="metric-card" style="margin-top: 0px; border-left: 4px solid #0284c7;">
-            <span style="font-size:12px; color:#64748b; font-weight:700; letter-spacing:0.5px;">BUDGET CAP UTILIZATION MATRIX</span><br/>
-            <span style="font-size:22px; font-weight:800; color:#0284c7;">₹{total:,.2f} Used / ₹25,000 Target Threshold</span>
+            <span style="font-size:12px; color:#64748b; font-weight:700; letter-spacing:0.5px;">MONTHLY SPENDING METER</span><br/>
+            <span style="font-size:22px; font-weight:800; color:#0284c7;">₹{total:,.2f} Spent / ₹25,000 Safety Limit</span>
         </div>
         """, unsafe_allow_html=True)
         st.progress(min(total/25000, 1.0))
         
-        # FEATURE ADDITION: Live Itemized Item List View Ledger
-        st.markdown("<p style='font-size:14px; font-weight:700; color:#475569; margin-bottom:6px;'>📜 Itemized Transactions (Cloud Mirror)</p>", unsafe_allow_html=True)
+        # FEATURE ADDITION: Clear Itemized History Ledger List View
+        st.markdown("<p style='font-size:14px; font-weight:700; color:#475569; margin-bottom:6px; margin-top:14px;'>📜 Your Recent History Ledger</p>", unsafe_allow_html=True)
         if res.data:
-            for item in res.data[-4:]: # Show last 4 entries for space efficiency
+            for item in res.data[-4:]: # Display last 4 records for maximum layout neatness
                 st.markdown(f"""
                 <div class="ledger-row">
                     <span style="font-weight:600; color:#1e293b;">{item['category']}</span>
@@ -380,67 +398,69 @@ def show_budgeting(username):
                 </div>
                 """, unsafe_allow_html=True)
         else:
-            st.markdown("<p style='font-size:13px; color:gray; font-style:italic;'>No real-time transactions detected.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:13px; color:gray; font-style:italic;'>You haven't tracked any expenses yet.</p>", unsafe_allow_html=True)
 
 def show_savings():
-    st.markdown("<p class='section-header'>🐷 Capital Yield Optimizers & SIP Calculators</p>", unsafe_allow_html=True)
+    st.markdown("<p class='section-header'>🐷 Savings Growth & Inflation Risk Calculators</p>", unsafe_allow_html=True)
+    st.write("See how your savings grow over time depending on where you put them, alongside how much buying power cash loses if it sits around doing nothing.")
+    
     col1, col2 = st.columns([1.2, 1.8])
     with col1:
-        principal = st.number_input("Principal Capital (₹)", min_value=1000, value=10000, step=1000)
-        tenure = st.slider("Time Horizon Scope (Years)", 1, 10, 3)
+        principal = st.number_input("Starting Money Amount (₹)", min_value=1000, value=10000, step=1000)
+        tenure = st.slider("How many years will you leave it?", 1, 10, 3)
     with col2:
-        sav_rate, fd_rate, inf_rate, sip_rate = 0.035, 0.071, 0.060, 0.120
+        sav_rate, fd_rate, inf_rate, simple_invest_rate = 0.035, 0.071, 0.060, 0.120
         sav_final = principal * ((1 + sav_rate) ** tenure)
         fd_final = principal * ((1 + fd_rate) ** tenure)
-        
-        # FEATURE ADDITION: Equity Index / SIP Compounding Yield Track Projection
-        sip_final = principal * ((1 + sip_rate) ** tenure)
+        invest_final = principal * ((1 + simple_invest_rate) ** tenure)
         
         purchasing_power = principal / ((1 + inf_rate) ** tenure)
         loss_value = principal - purchasing_power
         
         st.markdown(f"""
         <div class="metric-card">
-            <span style="font-size:12px; color:#64748b; font-weight:700; letter-spacing:0.5px;">GROWTH VALUE MATRIX FORECAST</span>
+            <span style="font-size:12px; color:#64748b; font-weight:700; letter-spacing:0.5px;">FUTURE BALANCES COMPARED</span>
             <hr style="margin:8px 0; border-color:#e2e8f0;"/>
             <div style="display:flex; justify-content:between; font-size:14.5px; margin:5px 0;">
-                <span style="color:#475569; font-weight:500;">Standard Savings Bank Account (~3.5%):</span>
+                <span style="color:#475569; font-weight:500;">Left in Regular Savings Bank Account (~3.5% growth):</span>
                 <span style="margin-left:auto; font-weight:700; color:#0f172a;">₹{sav_final:,.2f}</span>
             </div>
             <div style="display:flex; justify-content:between; font-size:14.5px; margin:5px 0; color:#0284c7;">
-                <span style="font-weight: 600;">Fixed Deposit Standard Lockup (~7.1%):</span>
+                <span style="font-weight: 600;">Locked in a Fixed Deposit Bank Plan (~7.1% growth):</span>
                 <span style="margin-left:auto; font-weight:800;">₹{fd_final:,.2f}</span>
             </div>
-            <div style="display:flex; justify-content:between; font-size:14.5px; margin:5px 0; color:#10b981;">
-                <span style="font-weight: 600;">🚀 Finora Diversified SIP Target (~12.0%):</span>
-                <span style="margin-left:auto; font-weight:800;">₹{sip_final:,.2f}</span>
+            <div style="display:flex; justify-content:between; font-size:14.5px; margin:6px 0; color:#10b981;">
+                <span style="font-weight: 600;">🚀 Put into a Simple Stock Index Fund (~12% average growth):</span>
+                <span style="margin-left:auto; font-weight:800;">₹{invest_final:,.2f}</span>
             </div>
             <hr style="margin:8px 0; border-color:#e2e8f0;"/>
             <div style="display:flex; justify-content:between; font-size:14.5px; margin:5px 0; color:#ef4444; background:#fef2f2; padding:8px 12px; border-radius:8px;">
-                <span style="font-weight:500;">⚠️ Mattress Cash Cash Devaluation Profile (~6% Inflation):</span>
-                <span style="margin-left:auto; font-weight:700;">-₹{loss_value:,.2f} Buying Power Loss</span>
+                <span style="font-weight:500;">⚠️ Left Under the Mattress (Loss to ~6% Yearly Inflation Cost):</span>
+                <span style="margin-left:auto; font-weight:700;">-₹{loss_value:,.2f} Drop in Real Buying Power</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
 def show_splitting():
-    st.markdown("<p class='section-header'>👥 peer-to-peer Settlement Engine & UPI Direct Links</p>", unsafe_allow_html=True)
+    st.markdown("<p class='section-header'>👥 Easy Friend Bill Splitter & Shareable UPI Links</p>", unsafe_allow_html=True)
+    st.write("Split dinner or rent bills with friends perfectly and create an instant payment share link without doing any complicated math.")
+    
     col1, col2 = st.columns([1.4, 1.6])
     with col1:
-        bill = st.number_input("Total Shared Bill Matrix (₹)", value=1500.0, step=100.0)
-        people = st.slider("Split Cohort Size (Count)", 2, 12, 3)
-        vpa = st.text_input("Your UPI Address Identifier VPA (Optional)", placeholder="example@upi").strip()
+        bill = st.number_input("Total Bill Amount to Split (₹)", value=1500.0, step=100.0)
+        people = st.slider("How many people are splitting it?", 2, 12, 3)
+        vpa = st.text_input("Your UPI Address ID (Optional - e.g., name@okaxis)", placeholder="name@upi").strip()
     with col2:
         per_person = round(bill/people, 2) if people > 0 else 0
         st.markdown(f"""
-        <div class="metric-card" style="text-align:center; padding:22px 18px; border-left: 6px solid #10b981; background: linear-gradient(180deg, #ffffff 0%, #f9fbf9 100%);">
-            <span style="font-size:13.5px; color:#64748b; font-weight:600; letter-spacing:0.5px;">INDIVIDUAL ACCOUNT LIABILITY:</span><br/>
+        <div class="metric-card" style="text-align:center; padding:22px 18px; border-left: 6px solid #10b981; background: linear-gradient(180deg, #ffffff 0%, #f9fbf9 100%); margin-top:10px;">
+            <span style="font-size:13.5px; color:#64748b; font-weight:600; letter-spacing:0.5px;">EACH PERSON OWES:</span><br/>
             <span style="font-size:40px; font-weight:900; color:#0f172a; line-height:1.2;">₹{per_person:,.2f}</span>
         </div>
         """, unsafe_allow_html=True)
         
         if vpa:
-            st.markdown("<span style='font-size:13px; color:#475569; font-weight:700;'>⚡ GENERATED LINK PATTERN FOR MESSENGER SHARING:</span>", unsafe_allow_html=True)
+            st.markdown("<span style='font-size:13px; color:#475569; font-weight:700;'>⚡ UPI LINK TO PASTE INTO YOUR FRIEND CHAT:</span>", unsafe_allow_html=True)
             upi_link = f"upi://pay?pa={vpa}&pn=FinoraSplit&am={per_person}&cu=INR"
             st.code(upi_link, language="markdown")
 
@@ -452,20 +472,20 @@ else:
     
     with st.sidebar:
         st.markdown("<p class='main-header' style='font-size: 28px !important; margin-bottom:0px;'>✨ Finora</p>", unsafe_allow_html=True)
-        st.caption(f"Operator Security Handle: {st.session_state.username.upper()}")
+        st.caption(f"Logged in as: {st.session_state.username.upper()}")
         
         user_points = profile['points'] if profile else 0
-        st.markdown(f"🏆 Rewards: **{user_points} Finora XP**")
+        st.markdown(f"🏆 Academy Balance: **{user_points} Finora XP**")
         st.markdown("<hr style='margin: 8px 0; border-color:#e2e8f0;'/>", unsafe_allow_html=True)
         
-        if st.sidebar.button("📊 Analytics Control"): st.session_state.nav_selection = "📊 Dashboard"; st.rerun()
-        if st.sidebar.button("📚 Finora Academy"): st.session_state.nav_selection = "📚 Micro-Courses"; st.rerun()
-        if st.sidebar.button("📉 Budget Envelopes"): st.session_state.nav_selection = "📉 Expense Tracker"; st.rerun()
-        if st.sidebar.button("🐷 Savings Multipliers"): st.session_state.nav_selection = "🐷 Savings Calculator"; st.rerun()
-        if st.sidebar.button("👥 Split Peer Liabilities"): st.session_state.nav_selection = "👥 Split Bills"; st.rerun()
+        if st.sidebar.button("📊 My Dashboard Hub"): st.session_state.nav_selection = "📊 Dashboard"; st.rerun()
+        if st.sidebar.button("📚 Finora Micro-Academy"): st.session_state.nav_selection = "📚 Micro-Courses"; st.rerun()
+        if st.sidebar.button("📉 Envelope Expense Tracker"): st.session_state.nav_selection = "📉 Expense Tracker"; st.rerun()
+        if st.sidebar.button("🐷 Savings Multiplier"): st.session_state.nav_selection = "🐷 Savings Calculator"; st.rerun()
+        if st.sidebar.button("👥 Split Bills With Friends"): st.session_state.nav_selection = "👥 Split Bills"; st.rerun()
         
         st.markdown("<hr style='margin: 12px 0; border-color:#e2e8f0;'/>", unsafe_allow_html=True)
-        if st.sidebar.button("🚪 Terminate App Session"):
+        if st.sidebar.button("🚪 Log Out of Session"):
             st.session_state.username = None
             st.session_state.nav_selection = "📊 Dashboard"
             st.rerun()
