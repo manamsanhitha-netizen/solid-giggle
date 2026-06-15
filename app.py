@@ -30,7 +30,7 @@ st.markdown("""
         margin-bottom: 20px;
     }
     </style>
-""", unsafe_value_with_restore=True)
+""", unsafe_allow_html=True)
 
 # --- SECURITY & AUTH ENGINE ---
 def hash_password(password: str) -> str:
@@ -53,8 +53,8 @@ if "username" not in st.session_state:
 
 def login_page():
     # Centered Header UI
-    st.markdown("<h1 style='text-align: center; color: #4A90E2;'>🎓 FinSmart Studio</h1>", unsafe_value_with_restore=True)
-    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: gray;'>The Smart Interactive Financial Hub For Students & Founders</p>", unsafe_value_with_restore=True)
+    st.markdown("<h1 style='text-align: center; color: #4A90E2;'>🎓 FinSmart Studio</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: gray;'>The Smart Interactive Financial Hub For Students & Founders</p>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     
@@ -130,7 +130,7 @@ def dashboard_page():
     left_ui, right_ui = st.columns([1, 2])
     
     with left_ui:
-        st.markdown("<div class='stCard'><h4>📉 Log Personal Expense</h4>", unsafe_value_with_restore=True)
+        st.markdown("<div class='stCard'><h4>📉 Log Personal Expense</h4>", unsafe_allow_html=True)
         with st.form("expense_form", clear_on_submit=True):
             category = st.selectbox("Allocation Category", ["Food & Routine", "Academic Materials", "Housing & Utilities", "Leisure & Welfare", "Startup / Side-Hustle Investment"])
             amount = st.number_input("Transaction Cost ($)", min_value=0.50, step=1.00)
@@ -143,10 +143,10 @@ def dashboard_page():
                     st.rerun()
                 except APIError as e:
                     st.error(f"Failed to compile data: {e.message}")
-        st.markdown("</div>", unsafe_value_with_restore=True)
+        st.markdown("</div>", unsafe_allow_html=True)
                 
     with right_ui:
-        st.markdown("<h4>📊 Budget Visualization & Analytics Desk</h4>", unsafe_value_with_restore=True)
+        st.markdown("<h4>📊 Budget Visualization & Analytics Desk</h4>", unsafe_allow_html=True)
         try:
             res = supabase.table("expenses").select("*").eq("username", username).execute()
             if res.data:
@@ -161,7 +161,6 @@ def dashboard_page():
                 # Active Notification Warning Systems
                 total_spent = df['amount'].sum()
                 limit = 500.00
-                ratio = min(total_spent / limit, 1.0)
                 
                 st.markdown(f"**Budget Consumption Status: ${total_spent:.2f} / ${limit:.2f}**")
                 if total_spent > limit:
@@ -179,7 +178,7 @@ def bill_splitting_page():
     st.markdown("## 👥 Shared Group Liability Engine")
     st.caption("Instantly divide shared expenses like rent, project supplies, or group meals.")
     
-    st.markdown("<div class='stCard'>", unsafe_value_with_restore=True)
+    st.markdown("<div class='stCard'>", unsafe_allow_html=True)
     with st.form("split_form"):
         col1, col2 = st.columns(2)
         with col1:
@@ -195,7 +194,7 @@ def bill_splitting_page():
             share = total_bill / num_friends
             st.markdown(f"### 🎯 Calculation: **${share:.2f} per person**")
             st.info(f"💡 **Actionable Split Nudge Alert Sent:** Request **${share:.2f}** from each teammate to balance individual balances for '{desc}' paid by **{payer}**.")
-    st.markdown("</div>", unsafe_value_with_restore=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 def learning_page():
     st.markdown("## 🎓 Micro-Learning Academic Track")
@@ -212,7 +211,7 @@ def learning_page():
             course = next(c for c in courses if c['title'] == choice)
             
             st.markdown(f"### 📘 {course['title']}")
-            st.markdown(f"<div class='stCard'>{course['content']}</div>", unsafe_value_with_restore=True)
+            st.markdown(f"<div class='stCard'>{course['content']}</div>", unsafe_allow_html=True)
             
             st.markdown("#### Check Your Understanding")
             opts = ["Choose an explicit option...", course['option_a'], course['option_b'], course['option_c']]
