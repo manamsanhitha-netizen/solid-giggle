@@ -6,8 +6,12 @@ import pandas as pd
 import plotly.express as px
 
 # --- SUPABASE SECURE CONFIGURATION ---
-SUPABASE_URL = st.secrets["SUPABASE_URL"]
+raw_url = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+
+# SAFETY VALVE: Automatically strips out "/rest/v1" or trailing slashes 
+# if they are accidentally included in your secrets manager configuration.
+SUPABASE_URL = raw_url.split("/rest/v1")[0].strip("/")
 
 @st.cache_resource
 def init_supabase() -> Client:
