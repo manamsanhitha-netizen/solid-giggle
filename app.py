@@ -176,7 +176,7 @@ if "page_idx" not in st.session_state:
 
 # --- LOGIN SCREEN ---
 def login_page():
-    st.markdown("<div style='text-align: center; margin-bottom: 10px;'><span class='main-header'>✨ Finora </span></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; margin-bottom: 10px;'><span class='main-header'>✨Finora</span></div>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #64748b; font-size:15px; margin-top: -12px; margin-bottom: 24px;'>Easy Money Tracking, Bill Splitting, and Simple Lessons for Students</p>", unsafe_allow_html=True)
     
     _, col2, _ = st.columns([1.4, 1.2, 1.4])
